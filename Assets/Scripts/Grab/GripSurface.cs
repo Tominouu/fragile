@@ -1,0 +1,105 @@
+using UnityEngine;
+
+namespace Fragile.Grab
+{
+    /// <summary>
+    /// Surface de prise cylindrique (batte, manche...). L'axe est le +Z local de cet objet.
+    /// Le rayon le long de l'axe est mesuré sur le maillage, pour que les doigts se posent sur la vraie forme.
+    /// </summary>
+    [DisallowMultipleComponent]
+    public class GripSurface : MonoBehaviour
+    {
+        [Tooltip("Marge aux extrémités où la main ne peut pas se placer (m).")]
+        [SerializeField] float m_EndMargin = 0.04f;
+
+        const int k_Bins = 96;
+        float[] m_Radius;
+        float m_ZMin, m_ZMax;
+
+        public Vector3 axisOrigin => transform.position;
+        public Vector3 axis => transform.forward;
+
+        /// <summary>Objet auquel accrocher les mains qui tiennent cette surface (par défaut : celui-ci).</summary>
+        public Transform handParent
+        {
+            get => m_HandParent != null ? m_HandParent : transform;
+            set => m_HandParent = value;
+        }
+        Transform m_HandParent;
+
+        void Awake() => Build();
+
+        public void Build()
+        {
+            var filters = GetComponentsInChildren<MeshFilter>();
+            m_ZMin = float.MaxValue; m_ZMax = float.MinValue;
+            var points = new System.Collections.Generic.List<Vector3>();
+            foreach (var mf in filters)
+            {
+                if (mf.sharedMesh == null) continue;
+                foreach (var v in mf.sharedMesh.vertices)
+                {
+                    var p = transform.InverseTransformPoint(mf.transform.TransformPoint(v));
+                    points.Add(p);
+                    m_ZMin = Mathf.Min(m_ZMin, p.z); m_ZMax = Mathf.Max(m_ZMax, p.z);
+                }
+            }
+
+            m_Radius = new float[k_Bins];
+            var has = new bool[k_Bins];
+            foreach (var p in points)
+            {
+                int b = Bin(p.z);
+                m_Radius[b] = Mathf.Max(m_Radius[b], new Vector2(p.x, p.y).magnitude);
+                has[b] = true;
+            }
+
+            // Comble les tranches sans sommet par interpolation entre voisines.
+            for (int i = 0; i < k_Bins; i++)
+            {
+                if (has[i]) continue;
+                int lo = i - 1; while (lo >= 0 && !has[lo]) lo--;
+                int hi = i + 1; while (hi < k_Bins && !has[hi]) hi++;
+                if (lo < 0 && hi >= k_Bins) continue;
+                if (lo < 0) m_Radius[i] = m_Radius[hi];
+                else if (hi >= k_Bins) m_Radius[i] = m_Radius[lo];
+                else m_Radius[i] = Mathf.Lerp(m_Radius[lo], m_Radius[hi], (i - lo) / (float)(hi - lo));
+            }
+        }
+
+        int Bin(float z) => Mathf.Clamp(Mathf.FloorToInt((z - m_ZMin) / (m_ZMax - m_ZMin) * k_Bins), 0, k_Bins - 1);
+
+        /// <summary>Rayon de l'objet à la coordonnée locale z.</summary>
+        public float RadiusAt(float z)
+        {
+            if (m_Radius == null) Build();
+            float f = (Mathf.Clamp(z, m_ZMin, m_ZMax) - m_ZMin) / (m_ZMax - m_ZMin) * k_Bins - 0.5f;
+            int i = Mathf.Clamp(Mathf.FloorToInt(f), 0, k_Bins - 1);
+            int j = Mathf.Min(i + 1, k_Bins - 1);
+            return Mathf.Lerp(m_Radius[i], m_Radius[j], Mathf.Clamp01(f - i));
+        }
+
+        /// <summary>Coordonnée z (locale) la plus proche d'un point, limitée à la zone saisissable.</summary>
+        public float ClosestGripZ(Vector3 worldPoint)
+        {
+            if (m_Radius == null) Build();
+            float z = transform.InverseTransformPoint(worldPoint).z;
+            return Mathf.Clamp(z, m_ZMin + m_EndMargin, m_ZMax - m_EndMargin);
+        }
+
+        /// <summary>Distance signée d'un point à la surface (négative = à l'intérieur).</summary>
+        public float SignedDistance(Vector3 worldPoint)
+        {
+            if (m_Radius == null) Build();
+            return SignedDistanceLocal(transform.InverseTransformPoint(worldPoint));
+        }
+
+        /// <summary>Même chose pour un point déjà exprimé dans le repère local de la surface (plus rapide en boucle).</summary>
+        public float SignedDistanceLocal(Vector3 l)
+        {
+            float radial = Mathf.Sqrt(l.x * l.x + l.y * l.y) - RadiusAt(l.z);
+            float axial = Mathf.Max(m_ZMin - l.z, l.z - m_ZMax);
+            return Mathf.Max(radial, axial);
+        }
+    }
+}

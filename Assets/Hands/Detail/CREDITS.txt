@@ -1,0 +1,8 @@
+Texture de détail de peau (Skin_Detail_Normal.png)
+
+Dérivées de "Human Materials 1 (CC0)" par britdawgmasterfunk
+https://sketchfab.com/3d-models/human-materials-1-cc0-be48a7526b304914b7c9f45c289b2ecf
+Licence affichée par Sketchfab : CC BY 4.0 — http://creativecommons.org/licenses/by/4.0/
+(la description de l'auteur indique CC0 ; on crédite par précaution).
+
+Modifications : normal map du matériau sans nom du pack, redimensionnée en 1024x1024.
