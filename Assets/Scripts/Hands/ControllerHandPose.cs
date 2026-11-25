@@ -73,6 +73,9 @@ namespace Fragile.Hands
 
         public bool isHolding => m_Holding != null;
 
+        /// <summary>Bout de l'index : sert à appuyer sur les boutons.</summary>
+        public Transform indexTip => m_Tips != null ? m_Tips[1] : null;
+
         void Awake()
         {
             CacheBones();

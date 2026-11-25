@@ -40,6 +40,8 @@ namespace Fragile.EditorTools
             var screen = ScreenMaterial();
 
             var old = GameObject.Find("Télés");
+            // Garde les réglages vidéo déjà faits (fichier, volume...).
+            bool hadVideo = old != null && old.TryGetComponent<Fragile.TV.TvVideo>(out var oldVideo) && UnityEditorInternal.ComponentUtility.CopyComponent(oldVideo);
             if (old != null) Undo.DestroyObjectImmediate(old);
             var root = new GameObject("Télés").transform;
             var room = GameObject.Find("Room");
@@ -69,12 +71,94 @@ namespace Fragile.EditorTools
                 Part(tv, "Support", PrimitiveType.Cube, new Vector3(0f, ScreenH / 2f + 0.03f, -Depth - 0.01f), new Vector3(0.18f, 0.08f, 0.03f), metal, collider: false);
             }
 
+            if (hadVideo) UnityEditorInternal.ComponentUtility.PasteComponentAsNew(root.gameObject);
+            SetupVideo(root.gameObject);
+            SetupBreakable(root.gameObject);
             Undo.RegisterCreatedObjectUndo(root.gameObject, "Ajouter les télés");
             Selection.activeGameObject = root.gameObject;
             var scene = EditorSceneManager.GetActiveScene();
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             Debug.Log($"[Fragile] 4 télés suspendues au-dessus du comptoir (centre {center.x:F2}, {center.z:F2}), bas des écrans à {CenterY - ScreenH / 2f:F2} m.");
+        }
+
+        [MenuItem("Fragile/Préparer la vidéo des télés")]
+        public static void PrepareVideo()
+        {
+            if (EditorApplication.isPlaying) { Debug.LogWarning("[Fragile] Quitte le mode Play d'abord."); return; }
+            var tvs = GameObject.Find("Télés");
+            if (tvs == null) { Debug.LogError("[Fragile] Télés introuvables : Fragile > Ajouter les télés au-dessus du comptoir."); return; }
+            SetupVideo(tvs);
+            Selection.activeGameObject = tvs;
+            EditorSceneManager.MarkSceneDirty(tvs.scene);
+            EditorSceneManager.SaveScene(tvs.scene);
+        }
+
+        [MenuItem("Fragile/Rendre les télés destructibles")]
+        public static void MakeBreakable()
+        {
+            if (EditorApplication.isPlaying) { Debug.LogWarning("[Fragile] Quitte le mode Play d'abord."); return; }
+            var tvs = GameObject.Find("Télés");
+            if (tvs == null) { Debug.LogError("[Fragile] Télés introuvables : Fragile > Ajouter les télés au-dessus du comptoir."); return; }
+            SetupBreakable(tvs);
+            AssetDatabase.SaveAssets();
+            EditorSceneManager.MarkSceneDirty(tvs.scene);
+            EditorSceneManager.SaveScene(tvs.scene);
+        }
+
+        static void SetupBreakable(GameObject tvs)
+        {
+            var dead = Mat("TV_Ecran_Mort", new Color(0.012f, 0.012f, 0.015f), 0f, 0.88f);
+            var shard = Mat("TV_Eclat", new Color(0.05f, 0.055f, 0.065f), 0f, 0.9f);
+            var crack = Unlit("TV_Fissure", "Universal Render Pipeline/Unlit", new Color(0.72f, 0.76f, 0.8f, 1f));
+            var spark = Unlit("TV_Etincelle", "Universal Render Pipeline/Particles/Unlit", Color.white);
+            // Étincelles : additives (elles brillent), fondu par la couleur des particules.
+            spark.SetFloat("_Surface", 1f); spark.SetFloat("_Blend", 2f);
+            spark.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            spark.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.One);
+            spark.SetFloat("_ZWrite", 0f);
+            spark.SetOverrideTag("RenderType", "Transparent");
+            spark.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            spark.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            var fx = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Bar/FX/BreakFX.prefab");
+            var glass = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Bar/Audio/Verre_Casse.wav");
+
+            int n = 0;
+            foreach (Transform tv in tvs.transform)
+            {
+                var screen = tv.Find("Écran");
+                if (screen == null) continue;
+                // Une télé qui tombe doit pouvoir bouger : pas de regroupement statique.
+                foreach (Transform part in tv)
+                    GameObjectUtility.SetStaticEditorFlags(part.gameObject, GameObjectUtility.GetStaticEditorFlags(part.gameObject) & ~StaticEditorFlags.BatchingStatic);
+                if (!tv.TryGetComponent<Rigidbody>(out var rb)) rb = tv.gameObject.AddComponent<Rigidbody>();
+                rb.isKinematic = true;
+                if (!tv.TryGetComponent<Fragile.TV.TvBreakable>(out var br)) br = tv.gameObject.AddComponent<Fragile.TV.TvBreakable>();
+                br.Setup(screen.GetComponent<Renderer>(), new Vector2(ScreenW, ScreenH), dead, crack, shard, spark, fx, glass);
+                EditorUtility.SetDirty(br);
+                n++;
+            }
+            Debug.Log($"[Fragile] {n} télés destructibles.");
+        }
+
+        static Material Unlit(string name, string shader, Color c)
+        {
+            string path = $"{Folder}/{name}.mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null) { m = new Material(Shader.Find(shader)); AssetDatabase.CreateAsset(m, path); }
+            m.SetColor("_BaseColor", c);
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        /// <summary>Emplacement vidéo : composant TvVideo branché sur tous les écrans.</summary>
+        static void SetupVideo(GameObject tvs)
+        {
+            if (!tvs.TryGetComponent<Fragile.TV.TvVideo>(out var video)) video = tvs.AddComponent<Fragile.TV.TvVideo>();
+            var screens = new System.Collections.Generic.List<Renderer>();
+            foreach (var r in tvs.GetComponentsInChildren<Renderer>()) if (r.name == "Écran") screens.Add(r);
+            video.SetScreens(screens.ToArray());
+            EditorUtility.SetDirty(video);
         }
 
         static GameObject Part(Transform parent, string name, PrimitiveType type, Vector3 localPos, Vector3 scale, Material mat, bool collider)

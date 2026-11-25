@@ -356,6 +356,7 @@ MonoBehaviour:
   m_Liquid: 1
   m_LiquidColor: {r: 0.85, g: 0.9, b: 1, a: 0.6}
   m_HitStop: 0.11
+  m_BreakClip: {fileID: 8300000, guid: 51bd14c1ccd7bd643b305ad97c7f78de, type: 3}
 --- !u!114 &7451360295938928104
 MonoBehaviour:
   m_ObjectHideFlags: 0

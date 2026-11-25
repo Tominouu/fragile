@@ -1,0 +1,127 @@
+{
+  "objectName": "Vinyl Record Player Retro Turntable.002",
+  "fbx": "Vinyl_Record_Player_Retro_Turntable_002.fbx",
+  "collider": true,
+  "materials": [
+    {
+      "name": "Material.009",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.7135579372614481,
+        0.7135579372614481,
+        0.7135579372614481,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "Material.011",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.7135570391079935,
+        0.7135570391079935,
+        0.7135570391079935,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "Bright Green Blue Plastic Gradient",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.9063354897608084,
+        0.7507884862478366,
+        0.0,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.0,
+      "transparent": false
+    },
+    {
+      "name": "Stainless Steel",
+      "baseColor": "Stainless_Steel_baseColor.jpg",
+      "normal": "Stainless_Steel_normal.jpg",
+      "roughness": "Stainless_Steel_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 1.0,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "Black Matte Plastic (Low Damaged)",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        0.0,
+        100.5
+      ],
+      "color": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.23636364936828613,
+      "transparent": false
+    },
+    {
+      "name": "Material.012",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.1975651069715827,
+        0.3932189349524822,
+        0.9063432490277652,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ]
+}

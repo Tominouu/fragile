@@ -15,7 +15,6 @@ Shader "Fragile/Verre"
         _Reflectivity("Reflets", Range(0, 1)) = 1
         _Smoothness("Lissé", Range(0, 1)) = 0.97
         _SpecularStrength("Éclats de lumière", Range(0, 8)) = 3
-        _StripStrength("Bandes de reflet (studio)", Range(0, 2)) = 0.9
         _Clarity("Clarté", Range(0.5, 1.6)) = 1.15
         [Toggle(_USE_SCENE_COLOR)] _UseSceneColor("Réfraction de la scène (Opaque Texture)", Float) = 1
     }
@@ -50,7 +49,7 @@ Shader "Fragile/Verre"
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseColor;
                 float4 _BaseMap_ST;
-                half _Density, _Refraction, _EdgeDarkness, _Reflectivity, _Smoothness, _SpecularStrength, _UseSceneColor, _StripStrength, _Clarity;
+                half _Density, _Refraction, _EdgeDarkness, _Reflectivity, _Smoothness, _SpecularStrength, _UseSceneColor, _Clarity;
             CBUFFER_END
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
 
@@ -135,21 +134,50 @@ Shader "Fragile/Verre"
                 LIGHT_LOOP_END
                 #endif
 
-                // 4) Bandes de reflet verticales, comme les reflets de grandes sources lumineuses en rendu studio :
-                //    deux fines lignes claires de part et d'autre de la bouteille, qui suivent sa courbure.
-                half3 side = SafeNormalize(cross(half3(0, 1, 0), V));
-                half s = abs(dot(N, side));
-                half strip = smoothstep(0.52h, 0.56h, s) * (1.0h - smoothstep(0.60h, 0.65h, s))
-                           + 0.6h * smoothstep(0.86h, 0.9h, s) * (1.0h - smoothstep(0.93h, 0.97h, s));
-                strip *= saturate(1.0h - abs(N.y) * 1.5h);   // seulement sur les parois verticales
 
                 half3 color = behind * transmit * (1.0h - fresnel) * _Clarity
                             + env * fresnel * _Reflectivity
-                            + specular * _SpecularStrength
-                            + strip * _StripStrength * (SampleSH(N) + 0.35h);
+                            + specular * _SpecularStrength;
                 color = MixFog(color, i.fog);
                 return half4(color, 1.0h);
             }
+            ENDHLSL
+        }
+
+        // Ombre portée : ancre les bouteilles sur le comptoir.
+        Pass
+        {
+            Name "ShadowCaster"
+            Tags { "LightMode" = "ShadowCaster" }
+            ZWrite On
+            ZTest LEqual
+            ColorMask 0
+            Cull Back
+
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Frag
+            #pragma multi_compile_instancing
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+
+            CBUFFER_START(UnityPerMaterial)
+                float4 _BaseColor;
+                float4 _BaseMap_ST;
+                half _Density, _Refraction, _EdgeDarkness, _Reflectivity, _Smoothness, _SpecularStrength, _UseSceneColor, _Clarity;
+            CBUFFER_END
+            float3 _LightDirection;
+
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; UNITY_VERTEX_INPUT_INSTANCE_ID };
+
+            float4 Vert(Attributes i) : SV_POSITION
+            {
+                UNITY_SETUP_INSTANCE_ID(i);
+                float3 ws = TransformObjectToWorld(i.positionOS.xyz);
+                float3 n = TransformObjectToWorldNormal(i.normalOS);
+                return ApplyShadowClamping(TransformWorldToHClip(ApplyShadowBias(ws, n, _LightDirection)));
+            }
+            half4 Frag() : SV_Target { return 0; }
             ENDHLSL
         }
     }

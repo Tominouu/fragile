@@ -128,6 +128,7 @@ namespace Fragile.EditorTools
             var so = new SerializedObject(br);
             so.FindProperty("m_Mass").floatValue = 0.9f;
             so.FindProperty("m_LiquidColor").colorValue = LiquidFor(type);
+            so.FindProperty("m_BreakClip").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Bar/Audio/Verre_Casse.wav");
             var tint = glass != null ? glass.color : renderer.sharedMaterial.color;
             so.FindProperty("m_ChipColor").colorValue = new Color(Mathf.Lerp(tint.r, 1f, 0.5f), Mathf.Lerp(tint.g, 1f, 0.5f), Mathf.Lerp(tint.b, 1f, 0.5f));
             so.FindProperty("m_ChipColor2").colorValue = new Color(tint.r, tint.g, tint.b);

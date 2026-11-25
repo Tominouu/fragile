@@ -46,6 +46,10 @@ namespace Fragile.Breakables
         [Tooltip("Ralenti maximal à l'impact (secondes, 0 = aucun). Seuls les coups francs le déclenchent.")]
         [SerializeField] float m_HitStop = 0.11f;
 
+        [Header("Son")]
+        [Tooltip("Son de casse (bouteilles : verre). Vide = céramique générée par le code.")]
+        [SerializeField] AudioClip m_BreakClip;
+
         bool m_Broken;
         float m_SpawnTime;
         static AudioClip s_SmashClip;
@@ -55,7 +59,7 @@ namespace Fragile.Breakables
         {
             m_SpawnTime = Time.time;
             // Préchargement : le son et un effet sont prêts avant le premier coup.
-            if (s_SmashClip == null) s_SmashClip = SmashSynth.Create();
+            if (m_BreakClip == null && s_SmashClip == null) s_SmashClip = SmashSynth.Create();
             BreakFx.Prewarm(m_FxPrefab, 2);
         }
 
@@ -194,18 +198,19 @@ namespace Fragile.Breakables
 
         void PlaySound(Vector3 point, float energy)
         {
-            if (s_SmashClip == null) s_SmashClip = SmashSynth.Create();
+            if (m_BreakClip == null && s_SmashClip == null) s_SmashClip = SmashSynth.Create();
+            var clip = m_BreakClip != null ? m_BreakClip : s_SmashClip;
             var go = new GameObject("Son casse");
             go.transform.position = point;
             var src = go.AddComponent<AudioSource>();
-            src.clip = s_SmashClip;
+            src.clip = clip;
             src.spatialBlend = 1f; src.rolloffMode = AudioRolloffMode.Logarithmic; src.minDistance = 0.6f; src.maxDistance = 25f;
             src.volume = Mathf.Lerp(0.45f, 1f, energy);
             // Coup violent : un peu plus grave et plus "gros" ; coup mou : plus aigu, plus fin.
             src.pitch = Mathf.Lerp(1.12f, 0.92f, energy) * Random.Range(0.96f, 1.04f);
             src.dopplerLevel = 0f;
             src.Play();
-            Destroy(go, s_SmashClip.length / src.pitch + 0.2f);
+            Destroy(go, clip.length / src.pitch + 0.2f);
         }
 
         // ------------------------------------------------------------------ ralenti

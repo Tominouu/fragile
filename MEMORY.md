@@ -30,8 +30,12 @@ Assets/
     FX/                            effet de casse (BreakFX.prefab), matériaux particules, sonde de réflexion,
                                    Liquides/ (matériaux de liquide)
     TV/                            télés suspendues (image de match générée, matériaux)
+    Vinyle/ Audio/                 platine : touches découpées, étiquette, matériaux ; morceau et vidéo des télés ignorés par Git (droits, dépôt public) : à copier à la main avec leurs .meta
+                                   Audio/Verre_Casse.wav = casse des bouteilles (LaSonotheque.fr, ID 0148) ; puffs : céramique générée (SmashSynth)
+    Lighting/                      luminaires (maillages, matériaux) + réglages de lightmapping
   Hands/                           mains réalistes générées (maillage + texture peau) ; Detail/ = normal map de pores (CC BY 4.0, voir CREDITS.txt)
-  Shaders/Verre.shader             verre (réfraction via Opaque Texture, absorption, Fresnel, bandes de reflet)
+  Scenes/Bar/                      lightmaps, probes et sonde calculées (régénérées par « Éclairer le Bar »)
+  Shaders/Verre.shader             verre (réfraction via Opaque Texture, absorption, Fresnel, reflets de la sonde)
   Shaders/Liquide.shader           liquide coupé par un plan monde (reste horizontal)
   Scripts/
     Hands/ControllerHandPose.cs    pose des mains : doigts pilotés par gâchette/grip ; prise d'objets sans pénétration
@@ -43,6 +47,7 @@ Assets/
     Breakables/Debris.cs           morceaux : gros = restent au sol sans physique ni collider ; miettes = disparaissent ; plafond 140
     Breakables/LiquidFill.cs       niveau + ondulation du liquide (ExecuteAlways)
     Breakables/SmashSynth.cs       son de casse généré par code
+    Music/Turntable, PanelButton, PanelKnob, FingerTips   platine vinyle ; bouton poussé au doigt, molette tournée au poignet (réutilisables)
     XR/SimulatorIfNoHeadset.cs     simulateur XR seulement si aucun casque (attend jusqu'à 4 s le démarrage OpenXR)
     Editor/                        outils (menus ci-dessous)
 Tools/Blender/fragile_unity_export.py   addon Blender « Fragile - Export vers Unity » (+ README)
@@ -61,6 +66,10 @@ Tools/Blender/fragile_unity_export.py   addon Blender « Fragile - Export vers U
 | Rendre les bouteilles attrapables | GripSurface (axe Y) + HandGripGrabInteractable sur bouteilles et puffs |
 | Remplir les bouteilles | volume de liquide + matériau par type de bouteille |
 | Ajouter les télés au-dessus du comptoir | 4 télés dos à dos suspendues au centre du comptoir |
+| Préparer la vidéo des télés | branche le composant `TvVideo` (objet Télés) sur les 4 écrans : y glisser un fichier vidéo (Assets/Bar/TV/Video) |
+| Rendre les télés destructibles | `TvBreakable` sur chaque télé : fissures -> écran mort (éclats, étincelles) -> chute. Les télés ne sont plus « Batching Static » (sinon elles ne peuvent pas tomber) |
+| Éclairer le Bar | luminaires + lightmaps + light probes + sonde (environ 1 min de calcul). À relancer si on déplace murs, comptoir ou télés |
+| Animer la platine vinyle | branche bouton marche/arrêt, molette de volume, disque, bras, égaliseur et son sur la platine de la scène |
 
 ## Pipeline Blender → Unity
 1. Blender (`E:\Assets.blend` chez Tom) : panneau N > onglet **Fragile** > *Exporter vers Fragile* (régler « Dossier Assets » sur son clone).
@@ -73,6 +82,8 @@ Tools/Blender/fragile_unity_export.py   addon Blender « Fragile - Export vers U
 - Pendant une prise, **la main est enfant de l'objet** : tout objet détruit doit d'abord relâcher les mains (`Breakable.ReleaseHands`).
 - Les mains sont des **préfabs FBX modifiés en scène** : ne pas laisser d'overrides d'os (rétablir avec RevertObjectOverride après des tests).
 - Le simulateur XR automatique de XRI est **désactivé** (sinon il écrase le suivi du casque) ; c'est `SimulatorIfNoHeadset` qui le lance.
+- **Éclairage précalculé** : toutes les lumières sont Baked, sauf la directionnelle (Mixed / Subtractive : ombres et modelé des objets mobiles). Les lumières additionnelles temps réel sont désactivées dans l'URP Performance. Réglages dans `BarLightingBuilder.cs` (ne pas retoucher à la main : relancer le menu écrase).
+- Murs et plafond ont **Cast Shadows = Off** (sinon ils bloquent la directionnelle). Les ombres du niveau « Low » étaient coupées (QualitySettings) : activées, distance 4 m, shadow map 2048 ; à recouper si le Quest peine.
 - **Opaque Texture** activée (demi-résolution) dans les deux URP assets pour la réfraction du verre ; à couper si les perfs Quest en souffrent (case « Réfraction de la scène » sur les matériaux de verre).
 - Le liquide est rendu en file 2500 (avant le verre transparent) pour être vu à travers la réfraction.
 - Physique à **72 Hz** (`TimeManager`) ; le laser de saisie (far casting) est **désactivé** : on n'attrape qu'à la main.
@@ -80,5 +91,4 @@ Tools/Blender/fragile_unity_export.py   addon Blender « Fragile - Export vers U
 - Le `.blend` n'est **pas** dans le dépôt (disque E: de Tom).
 
 ## Idées en attente
-- Télés : image animée, ou cassables.
 - Main Tripo (plus détaillée) abandonnée : nécessiterait un vrai rig fait dans Blender + licence vérifiée.

@@ -115,3 +115,8 @@ InitTestScene*.unity*
 
 # Visual Studio upgrade log
 UpgradeLog*.htm
+
+# Médias sous droits : gardés en local (dépôt public)
+/Assets/Bar/Audio/What_To_Do_AndME_Remix.mp3
+/Assets/Bar/Audio/What_To_Do_AndME_Remix.mp3.meta
+/Assets/Bar/TV/Video/*
