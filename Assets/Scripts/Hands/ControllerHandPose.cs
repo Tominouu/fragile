@@ -185,7 +185,7 @@ namespace Fragile.Hands
             // 2) Position : la paume vient contre la surface, au plus près de là où la main a saisi.
             var palmWorld = handHomeWorld.position + handRot * m_PalmLocal;
             float z = surface.ClosestGripZ(palmWorld);
-            var center = surface.transform.TransformPoint(new Vector3(0f, 0f, z));
+            var center = surface.AxisPoint(z);
             var normal = rot * m_PalmNormalLocal; // sort de la paume, vers l'objet
             normal = Vector3.ProjectOnPlane(normal, objAxis).normalized;
             float distance = surface.RadiusAt(z) + m_PalmThickness;
@@ -236,7 +236,7 @@ namespace Fragile.Hands
             // Les positions sont calculées directement dans le repère de l'objet (matrice os -> objet).
             var skin = new Matrix4x4[m_SkinBones.Length];
             int maxBones = MaxSkinBones();
-            var toSurface = surface.transform.worldToLocalMatrix;
+            var toSurface = surface.worldToSurface;
             UpdateSkinMatrices(skin, toSurface);
             var watch = new List<int>();
             for (int i = 0; i < m_MeshVerts.Length; i++)

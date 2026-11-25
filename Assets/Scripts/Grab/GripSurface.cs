@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Fragile.Grab
 {
     /// <summary>
-    /// Surface de prise cylindrique (batte, manche...). L'axe est le +Z local de cet objet.
+    /// Surface de prise cylindrique (batte, manche, bouteille...). L'axe est réglable (Z pour la batte, Y pour une bouteille debout).
     /// Le rayon le long de l'axe est mesuré sur le maillage, pour que les doigts se posent sur la vraie forme.
     /// </summary>
     [DisallowMultipleComponent]
@@ -11,13 +11,26 @@ namespace Fragile.Grab
     {
         [Tooltip("Marge aux extrémités où la main ne peut pas se placer (m).")]
         [SerializeField] float m_EndMargin = 0.04f;
+        [Tooltip("Axe long de l'objet, dans son repère local (batte : Z, bouteille debout : Y).")]
+        [SerializeField] Vector3 m_LocalAxis = Vector3.forward;
+
+        /// <summary>Rotation qui amène l'axe de l'objet sur Z (repère de calcul de la surface).</summary>
+        Quaternion ToZ => Quaternion.FromToRotation(m_LocalAxis.sqrMagnitude > 1e-6f ? m_LocalAxis.normalized : Vector3.forward, Vector3.forward);
+
+        public void SetLocalAxis(Vector3 axis) { m_LocalAxis = axis; m_Radius = null; }
+
+        /// <summary>Monde -> repère de la surface (axe sur Z).</summary>
+        public Matrix4x4 worldToSurface => Matrix4x4.Rotate(ToZ) * transform.worldToLocalMatrix;
+
+        /// <summary>Point de l'axe à la coordonnée z, en monde.</summary>
+        public Vector3 AxisPoint(float z) => transform.TransformPoint(Quaternion.Inverse(ToZ) * new Vector3(0f, 0f, z));
 
         const int k_Bins = 96;
         float[] m_Radius;
         float m_ZMin, m_ZMax;
 
         public Vector3 axisOrigin => transform.position;
-        public Vector3 axis => transform.forward;
+        public Vector3 axis => transform.TransformDirection(m_LocalAxis).normalized;
 
         /// <summary>Objet auquel accrocher les mains qui tiennent cette surface (par défaut : celui-ci).</summary>
         public Transform handParent
@@ -34,12 +47,13 @@ namespace Fragile.Grab
             var filters = GetComponentsInChildren<MeshFilter>();
             m_ZMin = float.MaxValue; m_ZMax = float.MinValue;
             var points = new System.Collections.Generic.List<Vector3>();
+            var toZ = ToZ;
             foreach (var mf in filters)
             {
                 if (mf.sharedMesh == null) continue;
                 foreach (var v in mf.sharedMesh.vertices)
                 {
-                    var p = transform.InverseTransformPoint(mf.transform.TransformPoint(v));
+                    var p = toZ * transform.InverseTransformPoint(mf.transform.TransformPoint(v));
                     points.Add(p);
                     m_ZMin = Mathf.Min(m_ZMin, p.z); m_ZMax = Mathf.Max(m_ZMax, p.z);
                 }
@@ -83,7 +97,7 @@ namespace Fragile.Grab
         public float ClosestGripZ(Vector3 worldPoint)
         {
             if (m_Radius == null) Build();
-            float z = transform.InverseTransformPoint(worldPoint).z;
+            float z = (ToZ * transform.InverseTransformPoint(worldPoint)).z;
             return Mathf.Clamp(z, m_ZMin + m_EndMargin, m_ZMax - m_EndMargin);
         }
 
@@ -91,10 +105,10 @@ namespace Fragile.Grab
         public float SignedDistance(Vector3 worldPoint)
         {
             if (m_Radius == null) Build();
-            return SignedDistanceLocal(transform.InverseTransformPoint(worldPoint));
+            return SignedDistanceLocal(ToZ * transform.InverseTransformPoint(worldPoint));
         }
 
-        /// <summary>Même chose pour un point déjà exprimé dans le repère local de la surface (plus rapide en boucle).</summary>
+        /// <summary>Même chose pour un point déjà exprimé dans le repère de la surface (voir worldToSurface ; plus rapide en boucle).</summary>
         public float SignedDistanceLocal(Vector3 l)
         {
             float radial = Mathf.Sqrt(l.x * l.x + l.y * l.y) - RadiusAt(l.z);

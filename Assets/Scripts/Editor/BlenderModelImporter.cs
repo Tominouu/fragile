@@ -18,13 +18,14 @@ namespace Fragile.EditorTools
         const string ManifestName = "fragile_export.json";
         const string RootName = "Modèles Blender";
 
-        [System.Serializable] class Manifest { public string objectName; public string fbx; public bool collider; public MaterialEntry[] materials; }
+        [System.Serializable] class Manifest { public string objectName; public string fbx; public bool collider; public bool place = true; public MaterialEntry[] materials; }
         [System.Serializable]
         class MaterialEntry
         {
             public string name, baseColor, normal, roughness, metallicMap;
             public float[] tiling, color;
             public float metallic, smoothness;
+            public bool transparent;
         }
 
         [MenuItem("Fragile/Importer les modèles Blender")]
@@ -49,6 +50,15 @@ namespace Fragile.EditorTools
             EditorSceneManager.SaveScene(scene);
             AssetDatabase.SaveAssets();
             Debug.Log($"[Fragile] Modèles Blender : {placed} placé(s) dans la scène « {scene.name} », {updated} mis à jour.");
+        }
+
+        /// <summary>Importe un seul dossier exporté (textures, matériaux) ; utilisé aussi par d'autres outils.</summary>
+        public static void ImportFolder(string folder)
+        {
+            var file = $"{folder}/{ManifestName}";
+            if (!File.Exists(file)) { Debug.LogWarning("[Fragile] Pas de " + ManifestName + " dans " + folder); return; }
+            var m = JsonUtility.FromJson<Manifest>(File.ReadAllText(file));
+            if (m != null) ImportOne(folder, m);
         }
 
         /// <returns>true si le modèle a été ajouté à la scène, false s'il y était déjà.</returns>
@@ -79,6 +89,9 @@ namespace Fragile.EditorTools
                 else Debug.LogWarning($"[Fragile] {m.objectName} : matériau « {e.name} » absent du FBX.");
             }
             importer.SaveAndReimport();
+
+            // Modèle destiné à être placé par un autre outil (ex. bouteilles du comptoir) : pas de placement ici.
+            if (!m.place) return false;
 
             // Placement (une seule fois) : si ce modèle est déjà quelque part dans la scène, on n'en ajoute pas un autre.
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
@@ -132,8 +145,49 @@ namespace Fragile.EditorTools
                 mat.SetFloat("_Metallic", 1f);
             }
             if (!string.IsNullOrEmpty(e.roughness)) Texture($"{folder}/{e.roughness}", normal: false, srgb: false); // gardée pour plus tard
+            SetTransparent(mat, e.transparent);
             EditorUtility.SetDirty(mat);
             return mat;
+        }
+
+        /// <summary>Verre : URP Lit transparent, teinté, très brillant, reflets conservés.</summary>
+        public static void SetTransparent(Material mat, bool on)
+        {
+            if (!on)
+            {
+                mat.SetFloat("_Surface", 0f); mat.SetFloat("_ZWrite", 1f);
+                mat.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.One);
+                mat.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.Zero);
+                mat.DisableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                mat.renderQueue = -1; mat.SetOverrideTag("RenderType", "Opaque");
+                return;
+            }
+            // Shader de verre du projet (Fresnel, reflets, éclats de lumière) ; URP Lit transparent en secours.
+            var glass = Shader.Find("Fragile/Verre");
+            if (glass != null)
+            {
+                var tint = mat.HasProperty("_BaseColor") ? mat.GetColor("_BaseColor") : Color.white;
+                var tex = mat.HasProperty("_BaseMap") ? mat.GetTexture("_BaseMap") : null;
+                var scale = mat.HasProperty("_BaseMap") ? mat.GetTextureScale("_BaseMap") : Vector2.one;
+                mat.shader = glass;
+                mat.SetColor("_BaseColor", new Color(tint.r, tint.g, tint.b, 0.12f));
+                mat.SetTexture("_BaseMap", tex); mat.SetTextureScale("_BaseMap", scale);
+                mat.shaderKeywords = new string[0];
+                mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+                return;
+            }
+            var c = mat.color; c.a = 0.35f; mat.color = c;
+            mat.SetFloat("_Surface", 1f); mat.SetFloat("_Blend", 0f);
+            mat.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            mat.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            mat.SetFloat("_SrcBlendAlpha", (float)UnityEngine.Rendering.BlendMode.One);
+            mat.SetFloat("_DstBlendAlpha", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            mat.SetFloat("_ZWrite", 0f);
+            mat.SetFloat("_BlendModePreserveSpecular", 1f); // les reflets restent visibles sur le verre
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            mat.EnableKeyword("_BLENDMODE_PRESERVE_SPECULAR_LIGHTING");
+            mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            mat.SetOverrideTag("RenderType", "Transparent");
         }
 
         static Texture2D Texture(string path, bool normal, bool srgb)

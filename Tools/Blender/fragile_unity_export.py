@@ -123,6 +123,26 @@ def guess_constants(mat):
     return color, metallic, max(0.0, min(1.0, smoothness))
 
 
+def glass_info(mat):
+    """(transparent, couleur linéaire ou None) : transmission du Principled, nœud Glass, ou alpha < 1."""
+    if not mat.use_nodes:
+        return False, None
+    for n in mat.node_tree.nodes:
+        if n.type == "BSDF_GLASS":
+            c = n.inputs["Color"]
+            return True, (None if c.is_linked else list(c.default_value))
+    bsdf = next((n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None)
+    if bsdf:
+        t = bsdf.inputs.get("Transmission Weight") or bsdf.inputs.get("Transmission")
+        a = bsdf.inputs.get("Alpha")
+        transmissive = t is not None and (t.is_linked or t.default_value > 0.5)
+        see_through = a is not None and not a.is_linked and a.default_value < 0.95
+        if transmissive or see_through:
+            bc = bsdf.inputs["Base Color"]
+            return True, (None if bc.is_linked else list(bc.default_value))
+    return False, None
+
+
 def linear_to_srgb(c):
     c = max(0.0, min(1.0, c))
     return 12.92 * c if c <= 0.0031308 else 1.055 * (c ** (1 / 2.4)) - 0.055
@@ -280,6 +300,14 @@ def export_group(context, objects, name, assets_dir, subfolder, collider, report
                     entry["smoothness"] = 0.5
                 if entry["baseColor"]:
                     entry["color"] = [1, 1, 1, 1]  # la texture porte la couleur
+                # Verre : Unity le rendra transparent, teinté de la couleur du verre.
+                transparent, glass_color = glass_info(m)
+                entry["transparent"] = transparent
+                if transparent:
+                    if glass_color and not entry["baseColor"]:
+                        entry["color"] = [linear_to_srgb(c) for c in glass_color[:3]] + [1.0]
+                    entry["metallic"] = 0.0
+                    entry["smoothness"] = 0.95
                 entry["tiling"] = first_mapping_scale(m.node_tree) or [1.0, 1.0]
             materials.append(entry)
 

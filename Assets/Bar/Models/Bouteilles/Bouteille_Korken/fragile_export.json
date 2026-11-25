@@ -1,0 +1,48 @@
+{
+  "objectName": "Bouteille_Korken",
+  "fbx": "Bouteille_Korken.fbx",
+  "collider": true,
+  "materials": [
+    {
+      "name": "Bottle004-Glass",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.6030165220282977,
+        0.4133098434181022,
+        0.005443533752113581,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.95,
+      "transparent": true
+    },
+    {
+      "name": "Bottle004-Cork",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.9063317593127924,
+        0.9063317593127924,
+        0.9063317593127924,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.8465045690536499,
+      "transparent": false
+    }
+  ],
+  "place": false
+}

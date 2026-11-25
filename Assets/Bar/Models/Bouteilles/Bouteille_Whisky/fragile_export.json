@@ -1,0 +1,48 @@
+{
+  "objectName": "Bouteille_Whisky",
+  "fbx": "Bouteille_Whisky.fbx",
+  "collider": true,
+  "materials": [
+    {
+      "name": "whisky_glass_mat",
+      "baseColor": "",
+      "normal": "whisky_glass_mat_normal.jpg",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.17576461968374807,
+        0.28643089729957316,
+        0.04584735421290697,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.95,
+      "transparent": true
+    },
+    {
+      "name": "whisky_other_mat",
+      "baseColor": "whisky_other_mat_baseColor.jpg",
+      "normal": "whisky_other_mat_normal.jpg",
+      "roughness": "whisky_other_mat_roughness.jpg",
+      "metallicMap": "whisky_other_mat_metallic.jpg",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false
+}

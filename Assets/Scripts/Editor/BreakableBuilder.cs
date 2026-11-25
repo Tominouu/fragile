@@ -29,7 +29,7 @@ namespace Fragile.EditorTools
 
             var fxPrefab = BreakFxBuilder.GetOrBuild(GetParticleMaterial(), FxFolder);
             var innerMat = GetInnerMaterial();
-            foreach (var go in targets) MakeBreakable(go, fxPrefab, innerMat);
+            foreach (var go in targets) { MakeBreakable(go, fxPrefab, innerMat); GrabbableBuilder.MakeGrabbable(go); }
             EnsureBatBreaker();
 
             var scene = EditorSceneManager.GetActiveScene();
@@ -40,6 +40,13 @@ namespace Fragile.EditorTools
 
         [MenuItem("Fragile/Rendre cassable (sélection)", true)]
         static bool Validate() => Selection.activeGameObject != null;
+
+        /// <summary>Rend un objet cassable (utilisable par d'autres outils, ex. bouteilles du comptoir).</summary>
+        public static void MakeBreakablePublic(GameObject go, Material innerOverride = null)
+        {
+            var fxPrefab = BreakFxBuilder.GetOrBuild(GetParticleMaterial(), FxFolder);
+            MakeBreakable(go, fxPrefab, innerOverride != null ? innerOverride : GetInnerMaterial());
+        }
 
         static void MakeBreakable(GameObject go, GameObject fxPrefab, Material innerMat)
         {

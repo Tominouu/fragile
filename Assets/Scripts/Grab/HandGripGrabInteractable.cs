@@ -34,6 +34,14 @@ namespace Fragile.Grab
         /// </summary>
         void EnsureNeutralVisualsRoot()
         {
+            // Maillage porté par l'objet lui-même (bouteilles) : pas de visuels séparés. XRI garde alors
+            // l'interpolation du Rigidbody, et la main suit l'objet sans à-coup.
+            if (TryGetComponent<Renderer>(out _))
+            {
+                predictedVisualsTransform = null;
+                return;
+            }
+
             var visuals = predictedVisualsTransform;
             if (visuals != null && visuals.parent == transform &&
                 visuals.localPosition == Vector3.zero && visuals.localRotation == Quaternion.identity && visuals.localScale == Vector3.one)
@@ -77,6 +85,103 @@ namespace Fragile.Grab
             var invObjRot = Quaternion.Inverse(objRot);
             dynamicAttachTransform.localPosition = invObjRot * (attach.position - objPos);
             dynamicAttachTransform.localRotation = invObjRot * attach.rotation;
+        }
+
+        // ------------------------------------------------------------------ lancer
+        // XRI estime la vitesse de lancer à partir de l'objet (qui suit la main avec un léger retard, et dont la
+        // vitesse est lissée) : le lancer paraît mou. Ici on suit directement la main, image par image, et au lâcher
+        // on donne à l'objet la vitesse réelle du geste (dont l'effet de fouet : un objet tenu par un bout part plus vite).
+
+        [Header("Lancer")]
+        [Tooltip("Durée du geste prise en compte (s). Court = réactif au coup de poignet final.")]
+        [SerializeField] float m_ThrowWindow = 0.1f;
+        [Tooltip("Petit coup de pouce (les lancers en VR paraissent toujours un peu courts sans retour d'effort).")]
+        [SerializeField] float m_ThrowBoost = 1.15f;
+        [SerializeField] float m_MaxThrowSpeed = 18f;
+
+        struct Sample { public float time; public Vector3 pos; public Quaternion rot; }
+        readonly Dictionary<IXRSelectInteractor, List<Sample>> m_Samples = new Dictionary<IXRSelectInteractor, List<Sample>>();
+        bool m_HasRelease;
+        Vector3 m_ReleaseVelocity, m_ReleaseAngular;
+
+        void LateUpdate()
+        {
+            if (!isSelected) return;
+            float now = Time.unscaledTime;
+            foreach (var interactor in interactorsSelecting)
+            {
+                if (!m_Samples.TryGetValue(interactor, out var list)) m_Samples[interactor] = list = new List<Sample>(32);
+                // Point de la main qui tient l'objet (la manette suivie).
+                var t = interactor.transform;
+                list.Add(new Sample { time = now, pos = t.position, rot = t.rotation });
+                while (list.Count > 0 && now - list[0].time > 0.25f) list.RemoveAt(0);
+            }
+        }
+
+        /// <summary>Vitesse du geste : pente des moindres carrés sur la fenêtre, en gardant le geste le plus vif (fin de lancer).</summary>
+        bool EstimateThrow(List<Sample> s, out Vector3 velocity, out Vector3 angular, out Vector3 handPos)
+        {
+            velocity = angular = handPos = Vector3.zero;
+            if (s == null || s.Count < 3) return false;
+            float now = s[s.Count - 1].time;
+            handPos = s[s.Count - 1].pos;
+
+            Vector3 Fit(float window)
+            {
+                int start = s.Count - 1;
+                while (start > 0 && now - s[start - 1].time <= window) start--;
+                int n = s.Count - start;
+                if (n < 2) return Vector3.zero;
+                float tm = 0; Vector3 pm = Vector3.zero;
+                for (int i = start; i < s.Count; i++) { tm += s[i].time; pm += s[i].pos; }
+                tm /= n; pm /= n;
+                float den = 0; Vector3 num = Vector3.zero;
+                for (int i = start; i < s.Count; i++) { float dt = s[i].time - tm; den += dt * dt; num += dt * (s[i].pos - pm); }
+                return den > 1e-8f ? num / den : Vector3.zero;
+            }
+            var vLong = Fit(m_ThrowWindow);
+            var vShort = Fit(m_ThrowWindow * 0.5f);
+            velocity = vShort.sqrMagnitude > vLong.sqrMagnitude ? vShort : vLong;
+
+            // Rotation du poignet sur la fin du geste.
+            int a = s.Count - 1;
+            while (a > 0 && now - s[a - 1].time <= m_ThrowWindow * 0.6f) a--;
+            float span = now - s[a].time;
+            if (span > 1e-4f)
+            {
+                (s[s.Count - 1].rot * Quaternion.Inverse(s[a].rot)).ToAngleAxis(out float deg, out Vector3 axis);
+                if (deg > 180f) deg -= 360f;
+                if (!float.IsNaN(axis.x) && axis.sqrMagnitude > 0.5f) angular = axis * (deg * Mathf.Deg2Rad / span);
+            }
+            return true;
+        }
+
+        protected override void OnSelectExiting(SelectExitEventArgs args)
+        {
+            // Dernière main qui lâche : on fige la vitesse du geste avant que XRI ne restaure le Rigidbody.
+            if (interactorsSelecting.Count == 1 && m_Samples.TryGetValue(args.interactorObject, out var list) &&
+                EstimateThrow(list, out var v, out var w, out var handPos) && TryGetComponent<Rigidbody>(out var rb))
+            {
+                // Effet de fouet : le centre de l'objet est entraîné par la rotation du poignet.
+                var lever = rb.worldCenterOfMass - handPos;
+                m_ReleaseVelocity = Vector3.ClampMagnitude((v + Vector3.Cross(w, lever)) * m_ThrowBoost, m_MaxThrowSpeed);
+                m_ReleaseAngular = w;
+                m_HasRelease = true;
+            }
+            m_Samples.Remove(args.interactorObject);
+            base.OnSelectExiting(args);
+        }
+
+        protected override void Detach()
+        {
+            if (!m_HasRelease || !throwOnDetach || !TryGetComponent<Rigidbody>(out var rb) || rb.isKinematic)
+            {
+                base.Detach();
+                return;
+            }
+            m_HasRelease = false;
+            rb.linearVelocity = m_ReleaseVelocity;
+            rb.angularVelocity = m_ReleaseAngular;
         }
 
         protected override void OnSelectExited(SelectExitEventArgs args)

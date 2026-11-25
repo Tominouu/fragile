@@ -1,0 +1,28 @@
+{
+  "objectName": "Bouteille_Flasque",
+  "fbx": "Bouteille_Flasque.fbx",
+  "collider": true,
+  "materials": [
+    {
+      "name": "Material.008",
+      "baseColor": "Material_008_baseColor.jpg",
+      "normal": "Material_008_normal.jpg",
+      "roughness": "Material_008_roughness.jpg",
+      "metallicMap": "Material_008_metallic.jpg",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false
+}

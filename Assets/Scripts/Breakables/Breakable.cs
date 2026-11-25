@@ -34,7 +34,8 @@ namespace Fragile.Breakables
         [SerializeField] Material[] m_ShardMaterials;   // matériaux d'origine + intérieur/tranche en dernier
         [SerializeField] Transform m_MeshTransform;
         [SerializeField] float m_Mass = 1.2f;
-        [SerializeField] float m_ShardLifetime = 7f;
+        [Tooltip("Nombre de plus gros morceaux qui restent au sol après la casse (les miettes disparaissent).")]
+        [SerializeField] int m_PiecesLeftOnGround = 7;
 
         [Header("Effets")]
         [SerializeField] GameObject m_FxPrefab;
@@ -101,8 +102,22 @@ namespace Fragile.Breakables
             if (m_HitStop > 0f && energy > 0.3f && !s_HitStopRunning)
                 StaticRunner.Run(HitStop(m_HitStop * Mathf.Lerp(0.45f, 1f, energy)));
 
+            ReleaseHands();
             gameObject.SetActive(false);
             Destroy(gameObject, 0.1f);
+        }
+
+        /// <summary>
+        /// Les mains qui tiennent l'objet y sont rattachées : on les rend à leur manette AVANT de désactiver l'objet
+        /// (sinon elles seraient détruites avec lui ; Unity interdit de les déplacer pendant la désactivation).
+        /// </summary>
+        void ReleaseHands()
+        {
+            if (TryGetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRBaseInteractable>(out var grab) && grab.isSelected && grab.interactionManager != null)
+                grab.interactionManager.CancelInteractableSelection((UnityEngine.XR.Interaction.Toolkit.Interactables.IXRSelectInteractable)grab);
+            // Sécurité : toute main encore rattachée retourne sur sa manette.
+            foreach (var hand in GetComponentsInChildren<Fragile.Hands.ControllerHandPose>(true))
+                hand.EndGrab();
         }
 
         // ------------------------------------------------------------------ éclats
@@ -123,6 +138,20 @@ namespace Fragile.Breakables
             float burst = Mathf.Lerp(0.3f, 2f, energy);
             float spin = Mathf.Lerp(3f, 20f, energy);
 
+            // Colliders des objets attrapables autour de la casse (à ignorer par les morceaux).
+            var nearbyInteractables = new System.Collections.Generic.List<Collider>();
+            foreach (var c in Physics.OverlapSphere(point, 3f, ~0, QueryTriggerInteraction.Ignore))
+                if (c.attachedRigidbody != null && c.attachedRigidbody.gameObject != gameObject &&
+                    c.attachedRigidbody.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRBaseInteractable>() != null)
+                    nearbyInteractables.Add(c);
+
+            // Les plus gros morceaux restent au sol ; les autres (miettes) disparaîtront une fois posés.
+            var order = new System.Collections.Generic.List<int>();
+            for (int i = 0; i < set.meshes.Length; i++) if (set.meshes[i] != null) order.Add(i);
+            order.Sort((a, b) => Volume(set.meshes[b]).CompareTo(Volume(set.meshes[a])));
+            var keep = new System.Collections.Generic.HashSet<int>();
+            for (int k = 0; k < order.Count && k < m_PiecesLeftOnGround; k++) keep.Add(order[k]);
+
             for (int i = 0; i < set.meshes.Length; i++)
             {
                 var mesh = set.meshes[i];
@@ -136,6 +165,9 @@ namespace Fragile.Breakables
 
                 var col = go.AddComponent<BoxCollider>();
                 col.center = mesh.bounds.center; col.size = Vector3.Max(mesh.bounds.size, Vector3.one * 0.004f);
+                // En vol, les morceaux ignorent les objets attrapables (bouteilles, batte, puffs) : ils ne les poussent pas
+                // et ne les cassent pas. Ils rebondissent toujours sur le décor (sol, comptoir, murs).
+                foreach (var other in nearbyInteractables) Physics.IgnoreCollision(col, other, true);
 
                 var rb = go.AddComponent<Rigidbody>();
                 rb.mass = Mathf.Max(0.02f, m_Mass * Volume(mesh) / Mathf.Max(1e-6f, totalVolume));
@@ -152,9 +184,8 @@ namespace Fragile.Breakables
                     + Vector3.up * Random.Range(0.1f, 0.8f) * energy;
                 rb.angularVelocity = Random.insideUnitSphere * spin;
 
-                go.AddComponent<ShardFade>().Begin(m_ShardLifetime + Random.Range(-1f, 1.5f));
+                go.AddComponent<Debris>().Init(keep.Contains(i));
             }
-            Destroy(root.gameObject, m_ShardLifetime + 4f);
         }
 
         static float Volume(Mesh m) { var s = m.bounds.size; return Mathf.Max(1e-6f, s.x * s.y * s.z); }

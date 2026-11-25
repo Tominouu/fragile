@@ -1,0 +1,48 @@
+{
+  "objectName": "Bouteille_Eau",
+  "fbx": "Bouteille_Eau.fbx",
+  "collider": true,
+  "materials": [
+    {
+      "name": "bottle_glass_mat",
+      "baseColor": "bottle_glass_mat_baseColor.png",
+      "normal": "bottle_glass_mat_normal.jpg",
+      "roughness": "bottle_glass_mat_roughness.png",
+      "metallicMap": "bottle_glass_mat_metallic.png",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.95,
+      "transparent": true
+    },
+    {
+      "name": "bottle_cup_mat",
+      "baseColor": "bottle_cup_mat_baseColor.png",
+      "normal": "bottle_cup_mat_normal.jpg",
+      "roughness": "bottle_cup_mat_roughness.png",
+      "metallicMap": "bottle_cup_mat_metallic.png",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false
+}

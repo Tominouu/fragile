@@ -1,0 +1,48 @@
+{
+  "objectName": "Bouteille_Bleue",
+  "fbx": "Bouteille_Bleue.fbx",
+  "collider": true,
+  "materials": [
+    {
+      "name": "BlueBottleGlass",
+      "baseColor": "",
+      "normal": "BlueBottleGlass_normal.jpg",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.9063317593127924,
+        0.9063317593127924,
+        0.9063317593127924,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.95,
+      "transparent": true
+    },
+    {
+      "name": "BlueBottle",
+      "baseColor": "BlueBottle_baseColor.jpg",
+      "normal": "BlueBottle_normal.jpg",
+      "roughness": "BlueBottle_roughness.jpg",
+      "metallicMap": "BlueBottle_metallic.jpg",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false
+}
