@@ -95,6 +95,10 @@ namespace Fragile.EditorTools
             {
                 Vector3 fn = normals[tris[t]] + normals[tris[t + 1]] + normals[tris[t + 2]];
                 bool back = fn.y > 0f; // dos de la main = +Y (la paume regarde -Y)
+                // Le pouce est tourné sur le côté : son "dos" (côté ongle) suit l'orientation de sa dernière phalange.
+                var centroid = (verts[tris[t]] + verts[tris[t + 1]] + verts[tris[t + 2]]) / 3f;
+                if (OnFinger(centroid, fingers[0], out _, out _))
+                    back = Vector3.Dot(fn, fingers[0].up) > 0f;
                 for (int k = 0; k < 3; k++)
                 {
                     int vi = tris[t + k];
@@ -113,17 +117,25 @@ namespace Fragile.EditorTools
                 }
             }
 
-            var mesh = new Mesh { name = side + "Hand_Realistic" };
+            // Mise à jour en place via l'API Mesh (pas CopySerialized : avec lui, les SkinnedMeshRenderer gardent
+            // l'ancienne taille de maillage en mémoire graphique et cessent d'afficher la main).
+            string meshPath = $"{OutFolder}/{side}Hand_Realistic.asset";
+            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(meshPath);
+            bool created = mesh == null;
+            if (created) mesh = new Mesh();
+            mesh.Clear();
+            mesh.name = side + "Hand_Realistic";
             mesh.indexFormat = nVerts.Count > 65000 ? UnityEngine.Rendering.IndexFormat.UInt32 : UnityEngine.Rendering.IndexFormat.UInt16;
             mesh.SetVertices(nVerts); mesh.SetNormals(nNormals); mesh.SetUVs(0, nUvs);
             mesh.boneWeights = nWeights.ToArray(); mesh.bindposes = bind;
             mesh.SetTriangles(nTris, 0);
             mesh.RecalculateTangents(); mesh.RecalculateBounds();
+            if (created) AssetDatabase.CreateAsset(mesh, meshPath);
+            else EditorUtility.SetDirty(mesh);
 
-            string meshPath = $"{OutFolder}/{side}Hand_Realistic.asset";
-            var existing = AssetDatabase.LoadAssetAtPath<Mesh>(meshPath);
-            if (existing != null) { EditorUtility.CopySerialized(mesh, existing); mesh = existing; }
-            else AssetDatabase.CreateAsset(mesh, meshPath);
+            // Les renderers déjà dans la scène doivent repartir des nouvelles données.
+            foreach (var r in Object.FindObjectsByType<SkinnedMeshRenderer>(FindObjectsSortMode.None))
+                if (r.sharedMesh == mesh) { r.sharedMesh = null; r.sharedMesh = mesh; }
 
             // --- Texture : rasterise chaque triangle en UV et peint selon la position 3D.
             var px = new Color[TexSize * TexSize];
@@ -161,6 +173,15 @@ namespace Fragile.EditorTools
             mat.SetFloat("_Metallic", 0f);
             if (mat.HasProperty("_SpecularHighlights")) mat.SetFloat("_SpecularHighlights", 1f);
             EditorUtility.SetDirty(mat);
+        }
+
+        /// <summary>Le point est-il sur la dernière phalange (zone du bout et de l'ongle) de ce doigt ?</summary>
+        static bool OnFinger(Vector3 pos, Finger f, out float along, out float dist)
+        {
+            Vector3 axis = f.tip - f.distal; float len = axis.magnitude; axis /= len;
+            along = Vector3.Dot(pos - f.distal, axis) / len;
+            dist = (pos - (f.distal + axis * along * len)).magnitude;
+            return along >= -0.2f && along <= 1.4f && dist <= 0.016f;
         }
 
         static Color Paint(Vector3 pos, Vector3 nrm, bool back, List<Finger> fingers, List<Vector3> joints)

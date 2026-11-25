@@ -1,0 +1,45 @@
+{
+  "objectName": "puff",
+  "fbx": "puff.fbx",
+  "collider": true,
+  "materials": [
+    {
+      "name": "Material.001",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.4070341344034072,
+        0.4070341344034072,
+        0.4070341344034072,
+        1.0
+      ],
+      "metallic": 1.0,
+      "smoothness": 0.8905219733715057
+    },
+    {
+      "name": "Material.002",
+      "baseColor": "Material_002_baseColor.png",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 1.0
+    }
+  ]
+}

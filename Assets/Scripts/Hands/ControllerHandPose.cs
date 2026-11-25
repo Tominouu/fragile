@@ -204,6 +204,15 @@ namespace Fragile.Hands
             ResolveSkinPenetration(surface, rot * m_PalmNormalLocal);
             lastGrabTimings = new Vector2(wrapMs, (float)sw.Elapsed.TotalMilliseconds - wrapMs);
 
+            // Sécurité : jamais de position invalide (NaN fait planter le rendu de l'éditeur).
+            var p = transform.position;
+            if (float.IsNaN(p.x) || float.IsNaN(p.y) || float.IsNaN(p.z))
+            {
+                Debug.LogWarning("[Fragile] Prise annulée : position de main invalide.");
+                EndGrab();
+                return false;
+            }
+
             // Pose de la main dans le repère de l'objet (racine physique).
             var objT = surface.transform;
             handInObject = new Pose(
@@ -233,7 +242,6 @@ namespace Fragile.Hands
             for (int i = 0; i < m_MeshVerts.Length; i++)
                 if (surface.SignedDistanceLocal(SkinVertex(i, skin, maxBones)) < 0.02f) watch.Add(i);
 
-            float floor = m_MinJointAngle - 20f;
             for (int iter = 0; iter < 80; iter++)
             {
                 UpdateSkinMatrices(skin, toSurface);
@@ -244,29 +252,49 @@ namespace Fragile.Hands
                 foreach (int i in watch)
                 {
                     float d = surface.SignedDistanceLocal(SkinVertex(i, skin, maxBones));
-                    if (d >= -m_SkinTolerance) continue;
+                    if (float.IsNaN(d) || d >= -m_SkinTolerance) continue;
                     any = true;
                     int link = m_VertexLink[i];
                     if (link < 0) { palmDepth = Mathf.Max(palmDepth, -d); continue; }
 
-                    // Rouvre la phalange concernée ; si elle est déjà en butée, remonte vers la base du doigt.
-                    int f = link / 4, j = link % 4;
-                    while (j >= 0 && m_HoldAngles[f][j] <= floor) j--;
-                    if (j >= 0) open[f][j] = true;
-                    else palmDepth = Mathf.Max(palmDepth, -d); // tout le doigt est en butée : on recule la main
+                    // Le doigt concerné s'ouvre d'un seul mouvement ; s'il est déjà ouvert à fond, on recule la main.
+                    int f = link / 4;
+                    if (m_Curl[f] > 0f || m_Extra[f] > 0f) open[f][0] = true;
+                    else palmDepth = Mathf.Max(palmDepth, -d);
                 }
                 if (!any) break;
 
-                if (palmDepth > 0f)
+                if (palmDepth > 0f && palmDepth < 0.05f)
                     transform.position -= palmNormalWorld * (palmDepth + 0.0005f);
 
                 for (int f = 0; f < open.Length; f++)
-                    for (int j = open[f].Length - 1; j >= 0; j--)
-                        if (open[f][j])
-                        {
-                            m_HoldAngles[f][j] = Mathf.Max(floor, m_HoldAngles[f][j] - 2f);
-                            SetJoint(f, j, m_HoldAngles[f][j]);
-                        }
+                {
+                    if (!open[f][0]) continue;
+                    // On retire d'abord le "bonus" du bout, puis on rouvre tout le doigt.
+                    if (m_Extra[f] > 0f) m_Extra[f] = Mathf.Max(0f, m_Extra[f] - 3f);
+                    else m_Curl[f] = Mathf.Max(0f, m_Curl[f] - 2f);
+                    SetFinger(f, m_Curl[f], m_Extra[f]);
+                }
+            }
+        }
+
+        // Répartition du pliage par articulation (base -> bout). Un seul paramètre par doigt :
+        // les phalanges se plient ensemble, jamais à l'envers -> pas de forme en "Z".
+        static readonly float[] k_ThumbRatios = { 0.35f, 0.8f, 0.6f };
+        static readonly float[] k_FingerRatios = { 1.0f, 1.0f, 0.75f };
+        float[] m_Curl = new float[5];   // fermeture commune du doigt
+        float[] m_Extra = new float[5];  // fermeture supplémentaire du bout (dernière phalange) pour épouser l'objet
+
+        void SetFinger(int f, float curl, float extra)
+        {
+            var ratios = f == 0 ? k_ThumbRatios : k_FingerRatios;
+            int n = m_Bones[f].Length;
+            for (int j = 0; j < n; j++)
+            {
+                float a = curl * ratios[Mathf.Min(j, ratios.Length - 1)];
+                if (j == n - 1) a += extra;
+                m_HoldAngles[f][j] = a;
+                SetJoint(f, j, a);
             }
         }
 
@@ -285,6 +313,7 @@ namespace Fragile.Hands
             var v = m_MeshVerts[i]; var w = m_Weights[i];
             float w0 = w.weight0, w1 = n > 1 ? w.weight1 : 0f, w2 = n > 2 ? w.weight2 : 0f, w3 = n > 3 ? w.weight3 : 0f;
             float total = w0 + w1 + w2 + w3;
+            if (total <= 1e-6f) return skin[w.boneIndex0].MultiplyPoint3x4(v); // sommet sans poids : évite une division par zéro (NaN)
             var p = skin[w.boneIndex0].MultiplyPoint3x4(v) * (w0 / total);
             if (w1 > 0f) p += skin[w.boneIndex1].MultiplyPoint3x4(v) * (w1 / total);
             if (w2 > 0f) p += skin[w.boneIndex2].MultiplyPoint3x4(v) * (w2 / total);
@@ -320,24 +349,32 @@ namespace Fragile.Hands
         {
             for (int f = 0; f < m_Bones.Length; f++)
             {
-                int n = m_Bones[f].Length;
-                for (int j = 0; j < n; j++) m_HoldAngles[f][j] = m_MinJointAngle;
-                ApplyAngles(m_HoldAngles);
+                m_Curl[f] = 0f; m_Extra[f] = 0f;
+                SetFinger(f, 0f, 0f);
 
-                for (int j = 0; j < n; j++)
+                // 1) Tout le doigt se ferme ensemble jusqu'au premier contact.
+                for (float a = 0f; a <= m_MaxJointAngle; a += 1.5f)
                 {
-                    if (m_Bones[f][j] == null) continue;
-                    float best = m_MinJointAngle;
-                    for (float a = m_MinJointAngle; a <= m_MaxJointAngle; a += 1.5f)
-                    {
-                        SetJoint(f, j, a);
-                        if (LinkPenetrates(f, j, surface)) break;
-                        best = a;
-                    }
-                    m_HoldAngles[f][j] = best;
-                    SetJoint(f, j, best);
+                    SetFinger(f, a, 0f);
+                    if (FingerPenetrates(f, surface)) break;
+                    m_Curl[f] = a;
                 }
+                // 2) Le bout continue un peu de se refermer s'il a encore de la place.
+                for (float e = 0f; e <= 40f; e += 1.5f)
+                {
+                    SetFinger(f, m_Curl[f], e);
+                    if (FingerPenetrates(f, surface)) break;
+                    m_Extra[f] = e;
+                }
+                SetFinger(f, m_Curl[f], m_Extra[f]);
             }
+        }
+
+        bool FingerPenetrates(int f, GripSurface surface)
+        {
+            for (int j = 0; j < m_Bones[f].Length; j++)
+                if (m_Bones[f][j] != null && LinkPenetrates(f, j, surface)) return true;
+            return false;
         }
 
         /// <summary>La phalange qui part de l'articulation j (jusqu'à la suivante ou au bout) touche-t-elle la surface ?</summary>
