@@ -1,157 +1,37 @@
-// Verre léger pour URP (Quest) : transparence avec effet Fresnel (bords plus opaques), reflets de l'environnement,
-// éclats de lumière nets, épaisseur suggérée par le rendu des faces arrière puis avant. Compatible rendu stéréo (VR).
+// Verre réaliste pour URP (Quest), inspiré du rendu Cycles :
+// - réfraction : on voit la scène derrière, déformée (image opaque de la scène, "Opaque Texture" d'URP) ;
+// - absorption selon l'épaisseur traversée : bords et fond plus foncés et plus colorés (verre ambré, vert...) ;
+// - bords assombris (réfraction / réflexion totale), reflets de l'environnement (Fresnel), éclats de lumière nets.
+// Compatible rendu stéréo (VR). Si l'Opaque Texture est désactivée, la réfraction utilise la sonde de réflexion.
 Shader "Fragile/Verre"
 {
     Properties
     {
-        [MainColor] _BaseColor("Teinte (alpha = opacité au centre)", Color) = (0.85, 0.95, 0.9, 0.12)
+        [MainColor] _BaseColor("Teinte du verre", Color) = (0.85, 0.95, 0.9, 1)
         [MainTexture] _BaseMap("Texture (optionnelle)", 2D) = "white" {}
-        _EdgeOpacity("Opacité des bords", Range(0, 1)) = 0.75
-        _FresnelPower("Netteté des bords", Range(0.5, 8)) = 3.5
-        _Reflectivity("Reflets", Range(0, 1)) = 0.85
-        _Smoothness("Lissé", Range(0, 1)) = 0.96
-        _SpecularStrength("Éclats de lumière", Range(0, 6)) = 2.5
-        _BackFaceStrength("Paroi arrière", Range(0, 1)) = 0.45
+        _Density("Densité de la teinte", Range(0, 6)) = 1.2
+        _Refraction("Réfraction (déformation)", Range(0, 0.15)) = 0.045
+        _EdgeDarkness("Bords sombres", Range(0, 1)) = 0.55
+        _Reflectivity("Reflets", Range(0, 1)) = 1
+        _Smoothness("Lissé", Range(0, 1)) = 0.97
+        _SpecularStrength("Éclats de lumière", Range(0, 8)) = 3
+        _StripStrength("Bandes de reflet (studio)", Range(0, 2)) = 0.9
+        _Clarity("Clarté", Range(0.5, 1.6)) = 1.15
+        [Toggle(_USE_SCENE_COLOR)] _UseSceneColor("Réfraction de la scène (Opaque Texture)", Float) = 1
     }
 
     SubShader
     {
         Tags { "RenderType" = "Transparent" "Queue" = "Transparent" "RenderPipeline" = "UniversalPipeline" "IgnoreProjector" = "True" }
 
-        HLSLINCLUDE
-        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-
-        CBUFFER_START(UnityPerMaterial)
-            float4 _BaseColor;
-            float4 _BaseMap_ST;
-            half _EdgeOpacity, _FresnelPower, _Reflectivity, _Smoothness, _SpecularStrength, _BackFaceStrength;
-        CBUFFER_END
-        TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
-
-        struct Attributes
-        {
-            float4 positionOS : POSITION;
-            float3 normalOS   : NORMAL;
-            float2 uv         : TEXCOORD0;
-            UNITY_VERTEX_INPUT_INSTANCE_ID
-        };
-
-        struct Varyings
-        {
-            float4 positionCS : SV_POSITION;
-            float3 positionWS : TEXCOORD0;
-            float3 normalWS   : TEXCOORD1;
-            float2 uv         : TEXCOORD2;
-            half   fog        : TEXCOORD3;
-            UNITY_VERTEX_INPUT_INSTANCE_ID
-            UNITY_VERTEX_OUTPUT_STEREO
-        };
-
-        Varyings Vert(Attributes i)
-        {
-            Varyings o = (Varyings)0;
-            UNITY_SETUP_INSTANCE_ID(i);
-            UNITY_TRANSFER_INSTANCE_ID(i, o);
-            UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-            VertexPositionInputs p = GetVertexPositionInputs(i.positionOS.xyz);
-            o.positionCS = p.positionCS;
-            o.positionWS = p.positionWS;
-            o.normalWS = TransformObjectToWorldNormal(i.normalOS);
-            o.uv = TRANSFORM_TEX(i.uv, _BaseMap);
-            o.fog = ComputeFogFactor(p.positionCS.z);
-            return o;
-        }
-
-        half Spec(half3 N, half3 V, half3 L, half shininess)
-        {
-            half3 H = SafeNormalize(L + V);
-            return pow(saturate(dot(N, H)), shininess) * saturate(dot(N, L) * 4.0h);
-        }
-
-        // Prémultiplié : rgb = lumière ajoutée par le verre, a = part du fond masquée.
-        half4 ShadeGlass(Varyings i, half faceSign, half strength)
-        {
-            UNITY_SETUP_INSTANCE_ID(i);
-            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
-
-            half3 N = normalize(i.normalWS) * faceSign;
-            half3 V = GetWorldSpaceNormalizeViewDir(i.positionWS);
-            half ndv = saturate(dot(N, V));
-            half fresnel = pow(1.0h - ndv, _FresnelPower);
-
-            half4 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv);
-            half3 tint = _BaseColor.rgb * tex.rgb;
-
-            // Reflets de l'environnement (sonde de réflexion / ciel).
-            half3 R = reflect(-V, N);
-            half3 env = GlossyEnvironmentReflection(R, i.positionWS, 1.0h - _Smoothness, 1.0h);
-
-            // Lumière : ambiance + lampe principale + lampes additionnelles.
-            half shininess = lerp(64.0h, 1500.0h, _Smoothness);
-            half3 diffuse = SampleSH(N);
-            half3 specular = 0;
-
-            Light mainLight = GetMainLight();
-            half3 mainCol = mainLight.color * mainLight.distanceAttenuation;
-            diffuse += mainCol * saturate(dot(N, mainLight.direction));
-            specular += mainCol * Spec(N, V, mainLight.direction, shininess);
-
-            #if defined(_ADDITIONAL_LIGHTS)
-            InputData inputData = (InputData)0;
-            inputData.positionWS = i.positionWS;
-            inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(i.positionCS);
-            uint count = GetAdditionalLightsCount();
-            LIGHT_LOOP_BEGIN(count)
-                Light l = GetAdditionalLight(lightIndex, i.positionWS);
-                half3 c = l.color * l.distanceAttenuation;
-                diffuse += c * saturate(dot(N, l.direction));
-                specular += c * Spec(N, V, l.direction, shininess);
-            LIGHT_LOOP_END
-            #endif
-
-            half bodyAlpha = _BaseColor.a * tex.a;
-            half refl = lerp(0.04h, 1.0h, fresnel) * _Reflectivity;
-            half3 color = tint * diffuse * bodyAlpha            // teinte du verre
-                        + env * refl                          // reflets, surtout sur les bords
-                        + specular * _SpecularStrength;          // éclats de lumière
-            half alpha = saturate(bodyAlpha + fresnel * _EdgeOpacity + Luminance(specular) * 0.5h);
-
-            color *= strength; alpha *= strength;
-            color = MixFog(color, i.fog);
-            return half4(color, alpha);
-        }
-        ENDHLSL
-
-        // 1) Paroi arrière (vue à travers la bouteille), plus discrète.
         Pass
         {
-            Name "VerreArriere"
-            Tags { "LightMode" = "SRPDefaultUnlit" }
-            Cull Front
-            ZWrite Off
-            Blend One OneMinusSrcAlpha
-            HLSLPROGRAM
-            #pragma vertex Vert
-            #pragma fragment Frag
-            #pragma multi_compile_instancing
-            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
-            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
-            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
-            #pragma multi_compile_fog
-            half4 Frag(Varyings i) : SV_Target { return ShadeGlass(i, -1.0h, _BackFaceStrength); }
-            ENDHLSL
-        }
-
-        // 2) Paroi avant.
-        Pass
-        {
-            Name "VerreAvant"
+            Name "Verre"
             Tags { "LightMode" = "UniversalForward" }
             Cull Back
-            ZWrite Off
-            Blend One OneMinusSrcAlpha
+            ZWrite On
+            Blend One Zero
+
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Frag
@@ -161,7 +41,115 @@ Shader "Fragile/Verre"
             #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
             #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
             #pragma multi_compile_fog
-            half4 Frag(Varyings i) : SV_Target { return ShadeGlass(i, 1.0h, 1.0h); }
+            #pragma shader_feature_local_fragment _USE_SCENE_COLOR
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
+
+            CBUFFER_START(UnityPerMaterial)
+                float4 _BaseColor;
+                float4 _BaseMap_ST;
+                half _Density, _Refraction, _EdgeDarkness, _Reflectivity, _Smoothness, _SpecularStrength, _UseSceneColor, _StripStrength, _Clarity;
+            CBUFFER_END
+            TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
+
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float3 positionWS : TEXCOORD0;
+                float3 normalWS   : TEXCOORD1;
+                float2 uv         : TEXCOORD2;
+                half   fog        : TEXCOORD3;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            Varyings Vert(Attributes i)
+            {
+                Varyings o = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(i);
+                UNITY_TRANSFER_INSTANCE_ID(i, o);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+                VertexPositionInputs p = GetVertexPositionInputs(i.positionOS.xyz);
+                o.positionCS = p.positionCS;
+                o.positionWS = p.positionWS;
+                o.normalWS = TransformObjectToWorldNormal(i.normalOS);
+                o.uv = TRANSFORM_TEX(i.uv, _BaseMap);
+                o.fog = ComputeFogFactor(p.positionCS.z);
+                return o;
+            }
+
+            half Spec(half3 N, half3 V, half3 L, half shininess)
+            {
+                half3 H = SafeNormalize(L + V);
+                return pow(saturate(dot(N, H)), shininess) * saturate(dot(N, L) * 4.0h);
+            }
+
+            half4 Frag(Varyings i) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(i);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
+
+                half3 N = normalize(i.normalWS);
+                half3 V = GetWorldSpaceNormalizeViewDir(i.positionWS);
+                half ndv = saturate(dot(N, V));
+                half edge = 1.0h - ndv;
+
+                half4 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv);
+                half3 tint = saturate(_BaseColor.rgb * tex.rgb);
+
+                // 1) Ce qu'on voit à travers : la scène derrière, déformée par la courbure du verre.
+                half3 viewN = TransformWorldToViewDir(N, true);
+                float2 uv = GetNormalizedScreenSpaceUV(i.positionCS);
+                float2 offset = viewN.xy * _Refraction * (0.35h + edge);
+                half3 behind;
+                #if defined(_USE_SCENE_COLOR)
+                    behind = SampleSceneColor(uv - offset);
+                #else
+                    half3 refr = refract(-V, N, 1.0h / 1.5h);
+                    behind = GlossyEnvironmentReflection(refr, i.positionWS, 0.05h, 1.0h);
+                #endif
+
+                // 2) Absorption : plus le trajet dans le verre est long (bords, vue rasante), plus c'est teinté et sombre.
+                half path = 1.0h / max(ndv, 0.12h);
+                half3 transmit = pow(max(tint, 0.001h), _Density * path * 0.5h);
+                // Bords sombres (réfraction de l'environnement + réflexion totale), comme en Cycles.
+                transmit *= lerp(1.0h, 1.0h - _EdgeDarkness, pow(edge, 2.0h));
+
+                // 3) Reflets : environnement (Fresnel, verre n = 1.5) + éclats de lumière nets.
+                half fresnel = 0.04h + 0.96h * pow(edge, 5.0h);
+                half3 env = GlossyEnvironmentReflection(reflect(-V, N), i.positionWS, 1.0h - _Smoothness, 1.0h);
+                half shininess = lerp(64.0h, 2000.0h, _Smoothness);
+                Light mainLight = GetMainLight();
+                half3 specular = mainLight.color * mainLight.distanceAttenuation * Spec(N, V, mainLight.direction, shininess);
+                #if defined(_ADDITIONAL_LIGHTS)
+                InputData inputData = (InputData)0;
+                inputData.positionWS = i.positionWS;
+                inputData.normalizedScreenSpaceUV = uv;
+                uint count = GetAdditionalLightsCount();
+                LIGHT_LOOP_BEGIN(count)
+                    Light l = GetAdditionalLight(lightIndex, i.positionWS);
+                    specular += l.color * l.distanceAttenuation * Spec(N, V, l.direction, shininess);
+                LIGHT_LOOP_END
+                #endif
+
+                // 4) Bandes de reflet verticales, comme les reflets de grandes sources lumineuses en rendu studio :
+                //    deux fines lignes claires de part et d'autre de la bouteille, qui suivent sa courbure.
+                half3 side = SafeNormalize(cross(half3(0, 1, 0), V));
+                half s = abs(dot(N, side));
+                half strip = smoothstep(0.52h, 0.56h, s) * (1.0h - smoothstep(0.60h, 0.65h, s))
+                           + 0.6h * smoothstep(0.86h, 0.9h, s) * (1.0h - smoothstep(0.93h, 0.97h, s));
+                strip *= saturate(1.0h - abs(N.y) * 1.5h);   // seulement sur les parois verticales
+
+                half3 color = behind * transmit * (1.0h - fresnel) * _Clarity
+                            + env * fresnel * _Reflectivity
+                            + specular * _SpecularStrength
+                            + strip * _StripStrength * (SampleSH(N) + 0.35h);
+                color = MixFog(color, i.fog);
+                return half4(color, 1.0h);
+            }
             ENDHLSL
         }
     }

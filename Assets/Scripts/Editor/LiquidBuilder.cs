@@ -111,7 +111,7 @@ namespace Fragile.EditorTools
             mat.shader = shader;
             mat.SetColor("_Color", l.body);
             mat.SetColor("_SurfaceColor", l.surface);
-            mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent - 10;
+            mat.renderQueue = 2500; // fin du rendu opaque : visible à travers le verre qui réfracte la scène
             EditorUtility.SetDirty(mat);
             return mat;
         }

@@ -24,7 +24,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: daae1f0940c797a48bf7f67b1fe92ca9, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _USE_SCENE_COLOR
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -104,14 +105,17 @@ Material:
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
+    - _Clarity: 1.15
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _Cull: 2
     - _Cutoff: 0.5
+    - _Density: 1.2
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 10
     - _DstBlendAlpha: 10
+    - _EdgeDarkness: 0.4
     - _EdgeOpacity: 0.75
     - _EnvironmentReflections: 1
     - _FresnelPower: 3.5
@@ -124,6 +128,7 @@ Material:
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _Reflectivity: 0.85
+    - _Refraction: 0.045
     - _ScreenSpaceReflections: 1
     - _ScreenSpaceReflectionsContributeTransparent: 1
     - _Smoothness: 0.95
@@ -132,12 +137,14 @@ Material:
     - _SpecularStrength: 2.5
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
+    - _StripStrength: 0.75
     - _Surface: 1
+    - _UseSceneColor: 1
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZWrite: 0
     m_Colors:
-    - _BaseColor: {r: 0.3, g: 0.55, b: 0.3, a: 0.12}
+    - _BaseColor: {r: 0.29999998, g: 0.54999995, b: 0.29999998, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 0.35}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}

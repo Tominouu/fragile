@@ -1,0 +1,84 @@
+# MEMORY — projet « fragile »
+
+Notes pour le prochain agent / développeur. À lire avant de toucher au projet.
+
+## Le projet
+Jeu VR Unity : un **bar** où l'on casse des objets (bouteilles, puffs) à la **batte**, avec des **mains réalistes** à la place des manettes.
+- **Unity 6000.6.10f1**, URP 17.6, XR Interaction Toolkit 3.6.1, XR Hands 1.9, OpenXR (Meta Quest + Android XR).
+- Cible : **Meta Quest** → tout doit rester léger (peu de particules, pas d'ombres sur les débris, shaders simples).
+- Scène principale : **`Assets/Scenes/Bar.unity`**. `Menu.unity` = scène de l'utilisateur ; `SampleScene` / `BasicScene` = template, non utilisées.
+- Deux développeurs : Tom (Windows) et un collègue (Mac).
+
+## Règles de travail (IMPORTANT)
+- **Commits et PR : aucune mention de Claude** (pas de `Co-Authored-By`, pas de « Generated with »). Auteur = l'utilisateur seul.
+- Ne commiter / pousser que sur demande. Langue de travail : **français**.
+- Les gros fichiers (fbx, png, jpg, asset de maillage…) passent par **Git LFS** (`.gitattributes`). Sans `git lfs pull`, Unity affiche « Missing Prefab ».
+- **Ne pas commiter** de modèles à la licence non vérifiée (un essai « main Tripo » a été abandonné et supprimé pour ça).
+
+## Arborescence utile
+```
+Assets/
+  Scenes/Bar.unity                 scène du jeu
+  Bar/
+    Batte.prefab                   batte (HandGripGrabInteractable + Breaker)
+    Materials/ Textures/           pièce (sol parquet généré, murs, plafond), batte
+    Models/Comptoir/               comptoir exporté de Blender (+ textures, matériaux URP)
+    Models/puff/                   puff (bouteille céramique Clase Azul), cassable
+    Models/Bouteilles/<Type>/      6 bouteilles (Whisky, Coloree, Eau, Bleue, Korken, Flasque) :
+                                   fbx, prefab cassable+attrapable, *_Eclats.asset, *_Liquide.asset
+    Models/Bouteilles/placements_comptoir.json   positions des 20 bouteilles (venant de Blender)
+    FX/                            effet de casse (BreakFX.prefab), matériaux particules, sonde de réflexion,
+                                   Liquides/ (matériaux de liquide)
+    TV/                            télés suspendues (image de match générée, matériaux)
+  Hands/                           mains réalistes générées (maillage + texture peau) ; Detail/ = normal map de pores (CC BY 4.0, voir CREDITS.txt)
+  Shaders/Verre.shader             verre (réfraction via Opaque Texture, absorption, Fresnel, bandes de reflet)
+  Shaders/Liquide.shader           liquide coupé par un plan monde (reste horizontal)
+  Scripts/
+    Hands/ControllerHandPose.cs    pose des mains : doigts pilotés par gâchette/grip ; prise d'objets sans pénétration
+    Grab/GripSurface.cs            surface de prise cylindrique (axe réglable : Z batte, Y bouteille)
+    Grab/HandGripGrabInteractable.cs  XRGrabInteractable : cale l'objet dans la main + lancer basé sur le geste réel
+    Breakables/Breakable.cs        casse (3 niveaux d'éclats selon la force), relâche les mains avant de se désactiver
+    Breakables/Breaker.cs          ce qui casse (la batte) + vibrations
+    Breakables/BreakFx.cs          effet de casse en pool (éclats 3D, poussière, liquide)
+    Breakables/Debris.cs           morceaux : gros = restent au sol sans physique ni collider ; miettes = disparaissent ; plafond 140
+    Breakables/LiquidFill.cs       niveau + ondulation du liquide (ExecuteAlways)
+    Breakables/SmashSynth.cs       son de casse généré par code
+    XR/SimulatorIfNoHeadset.cs     simulateur XR seulement si aucun casque (attend jusqu'à 4 s le démarrage OpenXR)
+    Editor/                        outils (menus ci-dessous)
+Tools/Blender/fragile_unity_export.py   addon Blender « Fragile - Export vers Unity » (+ README)
+```
+
+## Menus éditeur « Fragile > … »
+| Menu | Rôle |
+|---|---|
+| Construire la pièce du Bar | sol 10×10 m (téléportable), murs, plafond, lumière |
+| Ajouter le XR Origin au Bar | rig XR (Complete XR Origin Set Up Hands Variant) |
+| Générer les mains réalistes | régénère maillage + texture des mains (depuis les modèles XR Hands Android XR, qui doivent être Read/Write) |
+| Importer le comptoir | import dédié du comptoir (ancien, remplacé en pratique par l'import Blender générique) |
+| Importer les modèles Blender | lit tous les `fragile_export.json` : matériaux URP (verre → shader Fragile/Verre), collider, placement |
+| Placer les bouteilles du comptoir | préfabs cassables/attrapables + pose des 20 bouteilles d'après `placements_comptoir.json` |
+| Rendre cassable (sélection) | pré-découpe Voronoï (5/12/22 éclats) + Breakable + attrapable |
+| Rendre les bouteilles attrapables | GripSurface (axe Y) + HandGripGrabInteractable sur bouteilles et puffs |
+| Remplir les bouteilles | volume de liquide + matériau par type de bouteille |
+| Ajouter les télés au-dessus du comptoir | 4 télés dos à dos suspendues au centre du comptoir |
+
+## Pipeline Blender → Unity
+1. Blender (`E:\Assets.blend` chez Tom) : panneau N > onglet **Fragile** > *Exporter vers Fragile* (régler « Dossier Assets » sur son clone).
+   L'addon : bonne carte UV, textures extraites/converties (webp → png), détection du verre, `fragile_export.json`.
+2. Unity : *Fragile > Importer les modèles Blender*. Champ `"place": false` dans le json = ne pas poser automatiquement (cas des bouteilles).
+
+## Pièges connus (déjà rencontrés)
+- **Ne jamais utiliser `EditorUtility.CopySerialized` pour mettre à jour un maillage** : les SkinnedMeshRenderer gardent l'ancienne taille → mains invisibles. Utiliser `mesh.Clear()` + API Mesh.
+- **NaN en mode édition = crash d'Unity** (rendu). Garde-fous présents dans ControllerHandPose (poids nuls, position invalide).
+- Pendant une prise, **la main est enfant de l'objet** : tout objet détruit doit d'abord relâcher les mains (`Breakable.ReleaseHands`).
+- Les mains sont des **préfabs FBX modifiés en scène** : ne pas laisser d'overrides d'os (rétablir avec RevertObjectOverride après des tests).
+- Le simulateur XR automatique de XRI est **désactivé** (sinon il écrase le suivi du casque) ; c'est `SimulatorIfNoHeadset` qui le lance.
+- **Opaque Texture** activée (demi-résolution) dans les deux URP assets pour la réfraction du verre ; à couper si les perfs Quest en souffrent (case « Réfraction de la scène » sur les matériaux de verre).
+- Le liquide est rendu en file 2500 (avant le verre transparent) pour être vu à travers la réfraction.
+- Physique à **72 Hz** (`TimeManager`) ; le laser de saisie (far casting) est **désactivé** : on n'attrape qu'à la main.
+- MCP Unity (CoplayDev unity-mcp v10.3.0, http://127.0.0.1:8080) : se déconnecte souvent après recompilation / redémarrage → `/mcp` > Reconnect, et dans Unity *Window > MCP for Unity* > Start.
+- Le `.blend` n'est **pas** dans le dépôt (disque E: de Tom).
+
+## Idées en attente
+- Télés : image animée, ou cassables.
+- Main Tripo (plus détaillée) abandonnée : nécessiterait un vrai rig fait dans Blender + licence vérifiée.

@@ -14,7 +14,7 @@ Shader "Fragile/Liquide"
 
     SubShader
     {
-        Tags { "RenderType" = "Transparent" "Queue" = "Transparent-10" "RenderPipeline" = "UniversalPipeline" "IgnoreProjector" = "True" }
+        Tags { "RenderType" = "Transparent" "Queue" = "Geometry+500" "RenderPipeline" = "UniversalPipeline" "IgnoreProjector" = "True" }
 
         Pass
         {
