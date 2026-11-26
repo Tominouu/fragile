@@ -1,0 +1,148 @@
+{
+  "objectName": "Refrigerateur_Vitrine",
+  "fbx": "Refrigerateur_Vitrine.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "M_Tole_Noire",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.18974827810079856,
+        0.18974827810079856,
+        0.18974827810079856,
+        1.0
+      ],
+      "metallic": 0.4000000059604645,
+      "smoothness": 0.5999999940395355,
+      "transparent": false
+    },
+    {
+      "name": "M_Interieur",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.9063317593127924,
+        0.9063317593127924,
+        0.9063317593127924,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.3999999761581421,
+      "transparent": false
+    },
+    {
+      "name": "M_Verre",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.7977377471499069,
+        0.8808250210902997,
+        0.9063317593127924,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.95,
+      "transparent": true
+    },
+    {
+      "name": "M_Grille_Blanche",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.9309245565038701,
+        0.9309245565038701,
+        0.9309245565038701,
+        1.0
+      ],
+      "metallic": 0.800000011920929,
+      "smoothness": 0.699999988079071,
+      "transparent": false
+    },
+    {
+      "name": "M_Eclairage",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.9546871607410429,
+        0.9776915566891456,
+        0.9999999999999999,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.699999988079071,
+      "transparent": false
+    },
+    {
+      "name": "M_Enseigne_Rouge",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.7977377471499069,
+        0.18974827810079856,
+        0.15170371739116362,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.699999988079071,
+      "transparent": false
+    },
+    {
+      "name": "M_Inox_Brosse",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.8650420429846947,
+        0.8650420429846947,
+        0.875605636235772,
+        1.0
+      ],
+      "metallic": 1.0,
+      "smoothness": 0.6500000059604645,
+      "transparent": false
+    }
+  ],
+  "place": false
+}

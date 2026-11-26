@@ -1,0 +1,108 @@
+{
+  "objectName": "Machine_Cafe",
+  "fbx": "Machine_Cafe.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "M_Inox_Brosse",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.8650420429846947,
+        0.8650420429846947,
+        0.875605636235772,
+        1.0
+      ],
+      "metallic": 1.0,
+      "smoothness": 0.6500000059604645,
+      "transparent": false
+    },
+    {
+      "name": "M_Laque_Rouge",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.701410709184914,
+        0.18974827810079856,
+        0.15170371739116362,
+        1.0
+      ],
+      "metallic": 0.20000000298023224,
+      "smoothness": 0.75,
+      "transparent": false
+    },
+    {
+      "name": "M_Chrome",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.9546871607410429,
+        0.9546871607410429,
+        0.9639762404456368,
+        1.0
+      ],
+      "metallic": 1.0,
+      "smoothness": 0.8999999985098839,
+      "transparent": false
+    },
+    {
+      "name": "M_Plastique_Noir",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.15170371739116362,
+        0.15170371739116362,
+        0.15170371739116362,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "M_Cadran",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.9546871607410429,
+        0.9546871607410429,
+        0.9309245565038701,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.699999988079071,
+      "transparent": false
+    }
+  ],
+  "place": false
+}

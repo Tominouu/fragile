@@ -1,0 +1,228 @@
+{
+  "objectName": "Distributeur_Boissons",
+  "fbx": "Distributeur_Boissons.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "M_Tole_Rouge",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.7673756654827062,
+        0.18974827810079856,
+        0.15170371739116362,
+        1.0
+      ],
+      "metallic": 0.30000001192092896,
+      "smoothness": 0.699999988079071,
+      "transparent": false
+    },
+    {
+      "name": "M_Interieur",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.9309245565038701,
+        0.9309245565038701,
+        0.9309245565038701,
+        1.0
+      ],
+      "metallic": 0.30000001192092896,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "M_Verre",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.7977377471499069,
+        0.8808250210902997,
+        0.9063317593127924,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.95,
+      "transparent": true
+    },
+    {
+      "name": "M_Inox_Brosse",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.8650420429846947,
+        0.8650420429846947,
+        0.875605636235772,
+        1.0
+      ],
+      "metallic": 1.0,
+      "smoothness": 0.6500000059604645,
+      "transparent": false
+    },
+    {
+      "name": "M_Canette_Rouge",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.7977377471499069,
+        0.15170371739116362,
+        0.15170371739116362,
+        1.0
+      ],
+      "metallic": 0.800000011920929,
+      "smoothness": 0.75,
+      "transparent": false
+    },
+    {
+      "name": "M_Canette_Bleue",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.2478005298726647,
+        0.42358287916830234,
+        0.7977377471499069,
+        1.0
+      ],
+      "metallic": 0.800000011920929,
+      "smoothness": 0.75,
+      "transparent": false
+    },
+    {
+      "name": "M_Canette_Verte",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.2478005298726647,
+        0.701410709184914,
+        0.34919021513783693,
+        1.0
+      ],
+      "metallic": 0.800000011920929,
+      "smoothness": 0.75,
+      "transparent": false
+    },
+    {
+      "name": "M_Canette_Orange",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.9546871607410429,
+        0.6651850891023338,
+        0.15170371739116362,
+        1.0
+      ],
+      "metallic": 0.800000011920929,
+      "smoothness": 0.75,
+      "transparent": false
+    },
+    {
+      "name": "M_Canette_Argent",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.8808250210902997,
+        0.8808250210902997,
+        0.896243869286423,
+        1.0
+      ],
+      "metallic": 1.0,
+      "smoothness": 0.75,
+      "transparent": false
+    },
+    {
+      "name": "M_Eclairage",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.9546871607410429,
+        0.9776915566891456,
+        0.9999999999999999,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.699999988079071,
+      "transparent": false
+    },
+    {
+      "name": "M_Plastique_Noir",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.15170371739116362,
+        0.15170371739116362,
+        0.15170371739116362,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false
+}

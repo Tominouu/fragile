@@ -3,7 +3,37 @@ guid: 33c4db931458ccd4e85b04f876618dd2
 ModelImporter:
   serializedVersion: 24600
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Black Matte Plastic (Low Damaged)
+    second: {fileID: 2100000, guid: 3dd8992e42bf12f4a943e3d46a5ad152, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Bright Green Blue Plastic Gradient
+    second: {fileID: 2100000, guid: 90bb2ea8ddd305f4a9f2924ff5e98557, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.009
+    second: {fileID: 2100000, guid: c85e968da3d0fba4f91799b9aadce184, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.011
+    second: {fileID: 2100000, guid: 9d38a1f52aba76b4987b976f8dd86703, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.012
+    second: {fileID: 2100000, guid: d40728c08eb1b1e4e8b7495647fcb952, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Stainless Steel
+    second: {fileID: 2100000, guid: 3f3041a08d3d770438814fdc2a90130a, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -44,8 +74,8 @@ ModelImporter:
     importPhysicalCameras: 1
     importVisibility: 1
     importBlendShapes: 1
-    importCameras: 1
-    importLights: 1
+    importCameras: 0
+    importLights: 0
     nodeNameCollisionStrategy: 1
     fileIdsGeneration: 2
     swapUVChannels: 0

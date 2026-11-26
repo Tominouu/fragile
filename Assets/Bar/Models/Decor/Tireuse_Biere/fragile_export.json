@@ -1,0 +1,88 @@
+{
+  "objectName": "Tireuse_Biere",
+  "fbx": "Tireuse_Biere.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "M_Chrome",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.9546871607410429,
+        0.9546871607410429,
+        0.9639762404456368,
+        1.0
+      ],
+      "metallic": 1.0,
+      "smoothness": 0.880000002682209,
+      "transparent": false
+    },
+    {
+      "name": "M_Laiton",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.9309245565038701,
+        0.8094681526358262,
+        0.5838315006372918,
+        1.0
+      ],
+      "metallic": 1.0,
+      "smoothness": 0.75,
+      "transparent": false
+    },
+    {
+      "name": "M_Poignee_Noire",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.12835403856590433,
+        0.12835403856590433,
+        0.12835403856590433,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.44999998807907104,
+      "transparent": false
+    },
+    {
+      "name": "M_Inox_Brosse",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.8543058250926958,
+        0.8543058250926958,
+        0.8650420429846947,
+        1.0
+      ],
+      "metallic": 1.0,
+      "smoothness": 0.6200000047683716,
+      "transparent": false
+    }
+  ],
+  "place": false
+}
