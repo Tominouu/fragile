@@ -10,7 +10,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 spec = importlib.util.spec_from_file_location("fue", os.path.join(HERE, "fragile_unity_export.py"))
 fue = importlib.util.module_from_spec(spec); spec.loader.exec_module(fue)
 ASSETS = os.path.abspath(os.path.join(HERE, "..", "..", "Assets"))
-SUB = "Bar/Models/Mobilier"
+SUB = os.environ.get("FRAGILE_SUB", "Bar/Models/Mobilier")
 UA = {"User-Agent": "fragile-asset-import"}
 
 

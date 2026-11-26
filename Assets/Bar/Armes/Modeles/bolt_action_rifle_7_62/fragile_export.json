@@ -1,0 +1,69 @@
+{
+  "objectName": "bolt_action_rifle_7_62",
+  "fbx": "bolt_action_rifle_7_62.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "bolt_action_rifle_7_62_accesories",
+      "baseColor": "bolt_action_rifle_7_62_accesories_baseColor.jpg",
+      "normal": "bolt_action_rifle_7_62_accesories_normal.jpg",
+      "roughness": "bolt_action_rifle_7_62_accesories_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "bolt_action_rifle_7_62_accesories_glass",
+      "baseColor": "bolt_action_rifle_7_62_accesories_glass_baseColor.jpg",
+      "normal": "bolt_action_rifle_7_62_accesories_glass_normal.jpg",
+      "roughness": "bolt_action_rifle_7_62_accesories_glass_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "bolt_action_rifle_7_62",
+      "baseColor": "bolt_action_rifle_7_62_baseColor.jpg",
+      "normal": "bolt_action_rifle_7_62_normal.jpg",
+      "roughness": "bolt_action_rifle_7_62_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/bolt_action_rifle_7_62 (CC0)"
+}

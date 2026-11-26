@@ -1,0 +1,49 @@
+{
+  "objectName": "Cartouche_12",
+  "fbx": "Cartouche_12.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "Cartouche_Plastique",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.7673756654827062,
+        0.18974827810079856,
+        0.17184408839511128,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.550000011920929,
+      "transparent": false
+    },
+    {
+      "name": "Fusil_Laiton",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.9063317593127924,
+        0.7857769270190482,
+        0.5468542726376465,
+        1.0
+      ],
+      "metallic": 1.0,
+      "smoothness": 0.75,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "Modélisé par Tools/Blender/build_shotgun.py"
+}

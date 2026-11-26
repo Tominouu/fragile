@@ -1,0 +1,69 @@
+{
+  "objectName": "lantern_chandelier_01",
+  "fbx": "lantern_chandelier_01.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "lantern_chandelier_01",
+      "baseColor": "lantern_chandelier_01_baseColor.jpg",
+      "normal": "lantern_chandelier_01_normal.jpg",
+      "roughness": "lantern_chandelier_01_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "lantern_chandelier_01_glass",
+      "baseColor": "lantern_chandelier_01_glass_baseColor.jpg",
+      "normal": "lantern_chandelier_01_glass_normal.jpg",
+      "roughness": "lantern_chandelier_01_glass_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.95,
+      "transparent": true
+    },
+    {
+      "name": "lantern_chandelier_01_lamp",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.906331789156457,
+        0.8721104679163877,
+        0.7694461941813041,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.8335772156715393,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/lantern_chandelier_01 (CC0)"
+}

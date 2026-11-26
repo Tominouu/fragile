@@ -1,0 +1,29 @@
+{
+  "objectName": "WetFloorSign_01",
+  "fbx": "WetFloorSign_01.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "WetFloorSign_01",
+      "baseColor": "WetFloorSign_01_baseColor.jpg",
+      "normal": "WetFloorSign_01_normal.jpg",
+      "roughness": "WetFloorSign_01_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/WetFloorSign_01 (CC0)"
+}

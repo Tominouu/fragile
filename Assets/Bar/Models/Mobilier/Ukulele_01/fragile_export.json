@@ -1,0 +1,29 @@
+{
+  "objectName": "Ukulele_01",
+  "fbx": "Ukulele_01.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "Ukulele_01",
+      "baseColor": "Ukulele_01_baseColor.jpg",
+      "normal": "Ukulele_01_normal.jpg",
+      "roughness": "Ukulele_01_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/Ukulele_01 (CC0)"
+}

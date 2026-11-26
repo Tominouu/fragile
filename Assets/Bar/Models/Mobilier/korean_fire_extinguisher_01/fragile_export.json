@@ -1,0 +1,69 @@
+{
+  "objectName": "korean_fire_extinguisher_01",
+  "fbx": "korean_fire_extinguisher_01.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "korean_fire_extinguisher_01_body",
+      "baseColor": "korean_fire_extinguisher_01_body_baseColor.jpg",
+      "normal": "korean_fire_extinguisher_01_body_normal.jpg",
+      "roughness": "korean_fire_extinguisher_01_body_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "korean_fire_extinguisher_01_glass",
+      "baseColor": "korean_fire_extinguisher_01_glass_baseColor.jpg",
+      "normal": "korean_fire_extinguisher_01_glass_normal.jpg",
+      "roughness": "korean_fire_extinguisher_01_glass_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "korean_fire_extinguisher_01_paper",
+      "baseColor": "korean_fire_extinguisher_01_paper_baseColor.jpg",
+      "normal": "korean_fire_extinguisher_01_paper_normal.jpg",
+      "roughness": "korean_fire_extinguisher_01_paper_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/korean_fire_extinguisher_01 (CC0)"
+}

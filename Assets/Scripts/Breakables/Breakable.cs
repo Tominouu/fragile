@@ -47,10 +47,31 @@ namespace Fragile.Breakables
         [SerializeField] float m_HitStop = 0.11f;
 
         [Header("Son")]
-        [Tooltip("Son de casse (bouteilles : verre). Vide = céramique générée par le code.")]
+        [Tooltip("Son de casse (bouteilles : verre). Vide = son généré selon la matière.")]
         [SerializeField] AudioClip m_BreakClip;
 
+        public enum Matter { Ceramic, Glass, Wood, Metal, Plastic }
+
+        [Header("Résistance (décor)")]
+        [Tooltip("Matière : son des coups et de la casse, étincelles (métal).")]
+        [SerializeField] Matter m_Matter = Matter.Ceramic;
+        [Tooltip("Nombre de coups francs avant la casse (1 = au premier coup, comme une bouteille). Un coup mou compte moins.")]
+        [SerializeField] float m_Hits = 1f;
+        [Tooltip("Marques de coups (atlas 2×2, shader Fragile/Impact) : fissures, entailles, bosses.")]
+        [SerializeField] Material m_DamageMaterial;
+        [SerializeField] Material m_SparkMaterial;
+        [Tooltip("Vitesse des éclats : métal lourd < bois < céramique.")]
+        [SerializeField] float m_Burst = 1f;
+
         bool m_Broken;
+        float m_Damage, m_LastHit = -10f;
+        readonly System.Collections.Generic.List<GameObject> m_Marks = new System.Collections.Generic.List<GameObject>();
+        ParticleSystem m_Sparks;
+        Coroutine m_Shake;
+        static Mesh[] s_MarkQuads;
+
+        /// <summary>Usure de l'objet : 0 = intact, 1 = sur le point de casser.</summary>
+        public float damage01 => m_Hits <= 1f ? 0f : Mathf.Clamp01(m_Damage / m_Hits);
         float m_SpawnTime;
         static AudioClip s_SmashClip;
         static bool s_HitStopRunning;
@@ -80,8 +101,211 @@ namespace Fragile.Breakables
                 : -c.relativeVelocity.normalized;
 
             float minSpeed = hitByBreaker ? m_BreakSpeedWithBreaker : m_BreakSpeedAny;
-            Break(point, dir, power, Mathf.InverseLerp(minSpeed, m_MaxImpactSpeed, power));
-            if (breaker != null) breaker.Haptics(Mathf.InverseLerp(minSpeed, m_MaxImpactSpeed, power));
+            float energy = Mathf.InverseLerp(minSpeed, m_MaxImpactSpeed, power);
+            if (breaker != null) breaker.Haptics(energy);
+
+            // Objet fragile (bouteille, puff) : il casse au premier coup.
+            if (m_Hits <= 1f) { Break(point, dir, power, energy); return; }
+
+            // Objet solide : chaque coup l'abîme un peu plus (un coup franc compte plus qu'un coup mou).
+            if (Time.time - m_LastHit < 0.15f) return;   // plusieurs contacts du même coup
+            m_LastHit = Time.time;
+            m_Damage += Mathf.Lerp(0.45f, 1.4f, energy) * (hitByBreaker ? 1f : 0.6f);
+            if (m_Damage >= m_Hits) { Break(point, dir, power, Mathf.Max(energy, 0.55f)); return; }
+
+            var normal = c.contactCount > 0 ? c.GetContact(0).normal : -dir;
+            var hitter = c.rigidbody != null ? c.rigidbody.worldCenterOfMass : point - dir;
+            if (Vector3.Dot(normal, hitter - point) < 0f) normal = -normal;   // vers ce qui frappe
+            Damage(point, normal, dir, energy);
+        }
+
+        /// <summary>
+        /// Balle ou plombs (voir <see cref="Fragile.Weapons.Firearm"/>) : comme un coup, sans collision physique.
+        /// Un objet fragile casse aussitôt ; le décor encaisse <paramref name="damage"/> (en « coups francs »).
+        /// </summary>
+        public void Shot(Vector3 point, Vector3 normal, Vector3 direction, float damage, float energy)
+        {
+            if (m_Broken) return;
+            energy = Mathf.Clamp01(energy);
+            float power = Mathf.Lerp(m_BreakSpeedWithBreaker, m_MaxImpactSpeed, energy);
+            if (m_Hits <= 1f) { Break(point, direction, power, energy); return; }
+            m_LastHit = Time.time;
+            m_Damage += damage;
+            if (m_Damage >= m_Hits) { Break(point, direction, power, Mathf.Max(energy, 0.55f)); return; }
+            Damage(point, normal, direction, energy);
+        }
+
+        // ------------------------------------------------------------------ usure (décor)
+
+        /// <summary>Coup encaissé sans casser : marque à l'impact (plus grande avec l'usure), éclats, son, tremblement.</summary>
+        void Damage(Vector3 point, Vector3 normal, Vector3 dir, float energy)
+        {
+            float wear = damage01;
+            Crack(point, wear);
+            AddMark(point, normal, Mathf.Lerp(0.1f, 0.22f, energy) * Mathf.Lerp(1f, 1.6f, wear));
+
+            var fx = BreakFx.Get(m_FxPrefab);
+            if (fx != null)
+                fx.Play(new BreakFx.Settings { point = point, direction = normal, energy = Mathf.Lerp(0.04f, 0.2f, energy), chip1 = m_ChipColor, chip2 = m_ChipColor2, liquid = false });
+            if (m_Matter == Matter.Metal) Sparks(point, normal, Mathf.RoundToInt(Mathf.Lerp(10f, 40f, energy)));
+
+            var clip = m_Matter switch
+            {
+                Matter.Wood => Fragile.Audio.Sfx.WoodHit,
+                Matter.Metal => Fragile.Audio.Sfx.MetalHit,
+                Matter.Plastic => Fragile.Audio.Sfx.PlasticHit,
+                _ => Fragile.Audio.Sfx.CeramicHit,
+            };
+            // Plus il est abîmé, plus le son est grave et « fatigué ».
+            Fragile.Audio.Sfx.PlayAt(clip, point, Mathf.Lerp(0.5f, 1f, energy), Mathf.Lerp(1.05f, 0.85f, wear) * Random.Range(0.95f, 1.05f));
+
+            if (m_Shake != null) StopCoroutine(m_Shake);
+            m_Shake = StartCoroutine(Shake(dir, Mathf.Lerp(0.004f, 0.012f, energy) * Mathf.Lerp(1f, 1.8f, wear)));
+        }
+
+        // Objet fissuré : remplacé par ses morceaux (premier niveau d'éclats), encore à leur place, qui se disjoignent.
+        Transform m_Cracked;
+        Transform[] m_Pieces;
+        Vector3[] m_PieceRest, m_PieceAxis;
+        float m_LocalSize;
+
+        /// <summary>
+        /// Les fissures s'ouvrent : jointures et fentes s'écartent autour de l'impact, d'autant plus que l'objet est usé ;
+        /// les morceaux proches du coup basculent un peu. La matière à nu apparaît dans les fentes.
+        /// </summary>
+        void Crack(Vector3 point, float wear)
+        {
+            if (m_Levels == null || m_Levels.Length == 0 || m_Levels[0].meshes == null) return;
+            var t = m_MeshTransform != null ? m_MeshTransform : transform;
+            if (m_Cracked == null)
+            {
+                var set = m_Levels[0];
+                var bounds = new Bounds();
+                bool first = true;
+                foreach (var r in GetComponentsInChildren<MeshRenderer>())
+                {
+                    if (r.GetComponentInParent<GlassPane>() != null || r.name == "Surbrillance") continue;
+                    var lb = r.bounds; if (first) { bounds = lb; first = false; } else bounds.Encapsulate(lb);
+                    r.enabled = false;
+                }
+                m_LocalSize = Mathf.Max(0.1f, t.InverseTransformVector(bounds.size).magnitude);
+                m_Cracked = new GameObject("Fissures").transform;
+                m_Cracked.SetParent(t, false);
+                m_Pieces = new Transform[set.meshes.Length];
+                m_PieceRest = new Vector3[set.meshes.Length];
+                m_PieceAxis = new Vector3[set.meshes.Length];
+                var rng = new System.Random(name.GetHashCode() ^ transform.position.GetHashCode());
+                for (int i = 0; i < set.meshes.Length; i++)
+                {
+                    if (set.meshes[i] == null) continue;
+                    var go = new GameObject("Morceau " + i);
+                    go.transform.SetParent(m_Cracked, false);
+                    go.transform.localPosition = set.offsets[i];
+                    go.AddComponent<MeshFilter>().sharedMesh = set.meshes[i];
+                    go.AddComponent<MeshRenderer>().sharedMaterials = m_ShardMaterials;
+                    m_Pieces[i] = go.transform;
+                    m_PieceRest[i] = set.offsets[i];
+                    m_PieceAxis[i] = new Vector3((float)rng.NextDouble() - 0.5f, (float)rng.NextDouble() - 0.5f, (float)rng.NextDouble() - 0.5f).normalized;
+                }
+            }
+
+            var local = t.InverseTransformPoint(point);
+            float open = Mathf.Pow(wear, 0.8f);   // dès le 1er coup les fentes se voient, les derniers disloquent
+            for (int i = 0; i < m_Pieces.Length; i++)
+            {
+                if (m_Pieces[i] == null) continue;
+                var away = m_PieceRest[i] - local;
+                float near = 1f / (1f + away.magnitude / (m_LocalSize * 0.25f));
+                float gap = m_LocalSize * Mathf.Lerp(0.01f, 0.055f, open) * (0.35f + near);
+                // Un peu plus écarté à chaque coup, jamais refermé.
+                var target = m_PieceRest[i] + away.normalized * gap;
+                if ((target - m_PieceRest[i]).sqrMagnitude > (m_Pieces[i].localPosition - m_PieceRest[i]).sqrMagnitude)
+                    m_Pieces[i].localPosition = target;
+                m_Pieces[i].localRotation = Quaternion.AngleAxis(Mathf.Lerp(1.5f, 10f, open) * near * 2f, m_PieceAxis[i]);
+            }
+        }
+
+        void AddMark(Vector3 point, Vector3 normal, float size)
+        {
+            if (m_DamageMaterial == null) return;
+            if (s_MarkQuads == null) s_MarkQuads = MarkQuads();
+            GameObject go;
+            if (m_Marks.Count >= 10) { go = m_Marks[0]; m_Marks.RemoveAt(0); }
+            else
+            {
+                go = new GameObject("Marque de coup");
+                go.AddComponent<MeshFilter>();
+                var mr = go.AddComponent<MeshRenderer>();
+                mr.sharedMaterial = m_DamageMaterial;
+                mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                mr.receiveShadows = false;
+            }
+            go.GetComponent<MeshFilter>().sharedMesh = s_MarkQuads[Random.Range(0, s_MarkQuads.Length)];
+            // Marque dans le monde (pas enfant : l'objet peut être mis à l'échelle de façon non uniforme).
+            go.transform.SetPositionAndRotation(point + normal * 0.003f, Quaternion.LookRotation(normal) * Quaternion.Euler(0f, 0f, Random.Range(0f, 360f)));
+            go.transform.localScale = Vector3.one * size;
+            m_Marks.Add(go);
+        }
+
+        void Sparks(Vector3 point, Vector3 normal, int count)
+        {
+            if (m_SparkMaterial == null) return;
+            if (m_Sparks == null)
+            {
+                var go = new GameObject("Étincelles");
+                go.SetActive(false);
+                var ps = go.AddComponent<ParticleSystem>();
+                var main = ps.main;
+                main.playOnAwake = false; main.loop = false;
+                main.startLifetime = new ParticleSystem.MinMaxCurve(0.2f, 0.6f);
+                main.startSpeed = new ParticleSystem.MinMaxCurve(1f, 4.5f);
+                main.startSize = new ParticleSystem.MinMaxCurve(0.004f, 0.009f);
+                main.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 0.85f, 0.45f), new Color(1f, 0.6f, 0.2f));
+                main.gravityModifier = 1f;
+                main.simulationSpace = ParticleSystemSimulationSpace.World;
+                main.maxParticles = 80;
+                var em = ps.emission; em.enabled = false;
+                var shape = ps.shape; shape.shapeType = ParticleSystemShapeType.Cone; shape.angle = 50f; shape.radius = 0.01f;
+                var r = go.GetComponent<ParticleSystemRenderer>();
+                r.sharedMaterial = m_SparkMaterial;
+                r.renderMode = ParticleSystemRenderMode.Stretch; r.velocityScale = 0.03f; r.lengthScale = 1.5f;
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                go.SetActive(true);
+                m_Sparks = ps;
+            }
+            m_Sparks.transform.SetPositionAndRotation(point, Quaternion.LookRotation(normal));
+            m_Sparks.Emit(count);
+        }
+
+        /// <summary>Petit tremblement sous le coup (l'objet n'est pas statique pour pouvoir bouger).</summary>
+        IEnumerator Shake(Vector3 dir, float amplitude)
+        {
+            var rest = transform.position;
+            for (float t = 0f; t < 0.2f; t += Time.deltaTime)
+            {
+                float a = amplitude * (1f - t / 0.2f);
+                transform.position = rest + (dir * Mathf.Sin(t * 90f) + Random.insideUnitSphere * 0.3f) * a;
+                yield return null;
+            }
+            transform.position = rest;
+            m_Shake = null;
+        }
+
+        static Mesh[] MarkQuads()
+        {
+            var quads = new Mesh[4];
+            for (int i = 0; i < 4; i++)
+            {
+                var o = new Vector2(i % 2, i / 2) * 0.5f;
+                var m = new Mesh { name = "Marque " + i };
+                m.vertices = new[] { new Vector3(-0.5f, -0.5f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(0.5f, 0.5f, 0f), new Vector3(-0.5f, 0.5f, 0f) };
+                m.normals = new[] { Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward };
+                m.uv = new[] { o, o + new Vector2(0.5f, 0f), o + new Vector2(0.5f, 0.5f), o + new Vector2(0f, 0.5f) };
+                m.triangles = new[] { 0, 2, 1, 0, 3, 2 };
+                m.RecalculateBounds();
+                quads[i] = m;
+            }
+            return quads;
         }
 
         /// <summary>Casse l'objet. energy : 0 = juste au seuil, 1 = coup maximal.</summary>
@@ -98,13 +322,21 @@ namespace Fragile.Breakables
             if (fx != null)
                 fx.Play(new BreakFx.Settings
                 {
-                    point = point, direction = direction, energy = energy,
+                    // Décor (bois, métal) : peu d'éclats projetés, surtout de la poussière ; le verre gicle.
+                    point = point, direction = direction, energy = energy * Mathf.Lerp(0.3f, 1f, Mathf.Clamp01(m_Burst)),
                     chip1 = m_ChipColor, chip2 = m_ChipColor2, liquid = m_Liquid, liquidColor = m_LiquidColor
                 });
 
             PlaySound(point, energy);
+            if (m_Matter == Matter.Metal) Sparks(point, -direction, 60);
             if (m_HitStop > 0f && energy > 0.3f && !s_HitStopRunning)
                 StaticRunner.Run(HitStop(m_HitStop * Mathf.Lerp(0.45f, 1f, energy)));
+
+            // Les marques de coups et les étincelles ne sont pas des enfants : on les retire avec l'objet
+            // (les étincelles finissent leur gerbe avant).
+            foreach (var mark in m_Marks) if (mark != null) Destroy(mark);
+            m_Marks.Clear();
+            if (m_Sparks != null) Destroy(m_Sparks.gameObject, 1f);
 
             ReleaseHands();
             gameObject.SetActive(false);
@@ -138,9 +370,9 @@ namespace Fragile.Breakables
             foreach (var m in set.meshes) if (m != null) totalVolume += Volume(m);
 
             // Un coup mou fait surtout tomber les morceaux ; un coup violent les projette.
-            float push = Mathf.Lerp(0.15f, 0.8f, energy);
-            float burst = Mathf.Lerp(0.3f, 2f, energy);
-            float spin = Mathf.Lerp(3f, 20f, energy);
+            float push = Mathf.Lerp(0.15f, 0.8f, energy) * m_Burst;
+            float burst = Mathf.Lerp(0.3f, 2f, energy) * m_Burst;
+            float spin = Mathf.Lerp(3f, 20f, energy) * Mathf.Lerp(0.5f, 1f, m_Burst);
 
             // Colliders des objets attrapables autour de la casse (à ignorer par les morceaux).
             var nearbyInteractables = new System.Collections.Generic.List<Collider>();
@@ -199,7 +431,13 @@ namespace Fragile.Breakables
         void PlaySound(Vector3 point, float energy)
         {
             if (m_BreakClip == null && s_SmashClip == null) s_SmashClip = SmashSynth.Create();
-            var clip = m_BreakClip != null ? m_BreakClip : s_SmashClip;
+            var clip = m_BreakClip != null ? m_BreakClip : m_Matter switch
+            {
+                Matter.Wood => Fragile.Audio.Sfx.WoodBreak,
+                Matter.Metal => Fragile.Audio.Sfx.MetalBreak,
+                Matter.Plastic => Fragile.Audio.Sfx.PlasticBreak,
+                _ => s_SmashClip,
+            };
             var go = new GameObject("Son casse");
             go.transform.position = point;
             var src = go.AddComponent<AudioSource>();

@@ -1,0 +1,49 @@
+{
+  "objectName": "fancy_picture_frame_01",
+  "fbx": "fancy_picture_frame_01.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "fancy_picture_frame_01",
+      "baseColor": "fancy_picture_frame_01_baseColor.jpg",
+      "normal": "fancy_picture_frame_01_normal.jpg",
+      "roughness": "fancy_picture_frame_01_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "fancy_picture_frame_01_canvas",
+      "baseColor": "fancy_picture_frame_01_canvas_baseColor.jpg",
+      "normal": "fancy_picture_frame_01_canvas_normal.jpg",
+      "roughness": "fancy_picture_frame_01_canvas_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/fancy_picture_frame_01 (CC0)"
+}

@@ -1,0 +1,49 @@
+{
+  "objectName": "standing_chalkboard_01",
+  "fbx": "standing_chalkboard_01.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "standing_chalkboard_01_frame",
+      "baseColor": "standing_chalkboard_01_frame_baseColor.jpg",
+      "normal": "standing_chalkboard_01_frame_normal.jpg",
+      "roughness": "standing_chalkboard_01_frame_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "standing_chalkboard_01_board",
+      "baseColor": "standing_chalkboard_01_board_baseColor.jpg",
+      "normal": "standing_chalkboard_01_board_normal.jpg",
+      "roughness": "standing_chalkboard_01_board_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/standing_chalkboard_01 (CC0)"
+}

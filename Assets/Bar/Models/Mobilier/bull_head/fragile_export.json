@@ -1,0 +1,29 @@
+{
+  "objectName": "bull_head",
+  "fbx": "bull_head.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "bull_head",
+      "baseColor": "bull_head_baseColor.jpg",
+      "normal": "bull_head_normal.jpg",
+      "roughness": "bull_head_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/bull_head (CC0)"
+}

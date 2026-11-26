@@ -1,0 +1,29 @@
+{
+  "objectName": "service_pistol",
+  "fbx": "service_pistol.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "service_pistol",
+      "baseColor": "service_pistol_baseColor.jpg",
+      "normal": "service_pistol_normal.jpg",
+      "roughness": "service_pistol_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/service_pistol (CC0)"
+}

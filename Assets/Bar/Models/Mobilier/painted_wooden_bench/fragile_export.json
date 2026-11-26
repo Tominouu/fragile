@@ -1,0 +1,29 @@
+{
+  "objectName": "painted_wooden_bench",
+  "fbx": "painted_wooden_bench.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "painted_wooden_bench",
+      "baseColor": "painted_wooden_bench_baseColor.jpg",
+      "normal": "painted_wooden_bench_normal.jpg",
+      "roughness": "painted_wooden_bench_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/painted_wooden_bench (CC0)"
+}

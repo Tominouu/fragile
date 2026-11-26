@@ -65,6 +65,21 @@ namespace Fragile.Grab
             predictedVisualsTransform = root;
         }
 
+        [Tooltip("Déjà tenu : l'autre main ne peut pas le prendre (elle saisit alors la poignée secondaire, ex. la pompe d'une arme).")]
+        [SerializeField] bool m_NoHandSwap;
+
+        public override bool IsSelectableBy(IXRSelectInteractor interactor)
+        {
+            if (m_NoHandSwap && isSelected && !interactorsSelecting.Contains(interactor)) return false;
+            return base.IsSelectableBy(interactor);
+        }
+
+        public override bool IsHoverableBy(IXRHoverInteractor interactor)
+        {
+            if (m_NoHandSwap && isSelected && !(interactor is IXRSelectInteractor s && interactorsSelecting.Contains(s))) return false;
+            return base.IsHoverableBy(interactor);
+        }
+
         protected override void InitializeDynamicAttachPose(IXRSelectInteractor interactor, Transform dynamicAttachTransform)
         {
             var hand = FindHand(interactor);

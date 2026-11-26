@@ -1,0 +1,129 @@
+{
+  "objectName": "Fusil_Pompe",
+  "fbx": "Fusil_Pompe.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "Fusil_Acier",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.18281266418082706,
+        0.18974827810079856,
+        0.20906559884520182,
+        1.0
+      ],
+      "metallic": 1.0,
+      "smoothness": 0.699999988079071,
+      "transparent": false
+    },
+    {
+      "name": "Fusil_Interieur",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.05070871606938731,
+        0.05070871606938731,
+        0.05070871606938731,
+        1.0
+      ],
+      "metallic": 0.30000001192092896,
+      "smoothness": 0.30000001192092896,
+      "transparent": false
+    },
+    {
+      "name": "Fusil_Culasse",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.7353569830524495,
+        0.7353569830524495,
+        0.7483790695192482,
+        1.0
+      ],
+      "metallic": 1.0,
+      "smoothness": 0.7999999970197678,
+      "transparent": false
+    },
+    {
+      "name": "Fusil_Laiton",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.9063317593127924,
+        0.7857769270190482,
+        0.5468542726376465,
+        1.0
+      ],
+      "metallic": 1.0,
+      "smoothness": 0.75,
+      "transparent": false
+    },
+    {
+      "name": "Fusil_Noyer",
+      "baseColor": "Fusil_Noyer_baseColor.jpg",
+      "normal": "Fusil_Noyer_normal.jpg",
+      "roughness": "Fusil_Noyer_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "Fusil_Caoutchouc",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.14282567775472238,
+        0.14282567775472238,
+        0.14282567775472238,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.19999998807907104,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "Modélisé par Tools/Blender/build_shotgun.py"
+}

@@ -1,0 +1,29 @@
+{
+  "objectName": "Sofa_01",
+  "fbx": "Sofa_01.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "Sofa_01",
+      "baseColor": "Sofa_01_baseColor.jpg",
+      "normal": "Sofa_01_normal.jpg",
+      "roughness": "Sofa_01_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/Sofa_01 (CC0)"
+}

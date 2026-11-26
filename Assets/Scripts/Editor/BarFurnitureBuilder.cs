@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Fragile.Breakables;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -68,12 +69,44 @@ namespace Fragile.EditorTools
 
             // Murs, entre les appliques (à 1,64 m, tous les 3,33 m).
             l.Add(new Item("hanging_picture_frame_02", "Cadre", Kind.Wall, 1.66f, WallN, 180f, S(1.4f), 1.75f));
-            l.Add(new Item("hanging_picture_frame_02", "Cadre", Kind.Wall, -1.66f, WallS, 0f, S(1.4f), 1.75f));
             // Photos de l'équipe (zone d'image du cadre : U 0,16 → 0,84 d'une texture carrée, voir Assets/Bar/Tableaux).
             l.Add(new Item("hanging_picture_frame_01", "Tableau casque VR", Kind.Wall, WallW, 1.68f, 90f, S(1.3f), 1.7f, "Tableau_Casque_VR"));
             l.Add(new Item("hanging_picture_frame_01", "Tableau portrait", Kind.Wall, WallE, -1.65f, -90f, S(1.3f), 1.7f, "Tableau_Portrait"));
             l.Add(new Item("dartboard", "Cible de fléchettes", Kind.Wall, WallW, 5.0f, 90f, S(1f), 1.73f));
             l.Add(new Item("wall_clock", "Horloge", Kind.Wall, WallE, 1.68f, -90f, S(1.6f), 2.05f));
+
+            // Coin canapé (nord-ouest) : canapé contre le mur de briques, pouf, deux petits cadres de part et d'autre de l'applique.
+            l.Add(new Item("Sofa_01", "Canapé", Kind.Floor, -3.0f, 7.95f, 180f, S(1.1f)));
+            l.Add(new Item("Ottoman_01", "Pouf", Kind.Floor, -3.0f, 7.0f, 4f, S(1f)));
+            l.Add(new Item("fancy_picture_frame_01", "Petit cadre", Kind.Wall, -4.15f, WallN, 180f, S(1.2f), 1.42f));
+            l.Add(new Item("fancy_picture_frame_01", "Petit cadre", Kind.Wall, -2.5f, WallN, 180f, S(1.2f), 1.42f));
+            // Salon : lustre à lanternes au-dessus de la table basse, pouf ; ventilateur au-dessus du coin repas.
+            l.Add(new Item("lantern_chandelier_01", "Lustre", Kind.Hanging, 3.75f, 7.3f, 0f, S(1f)));
+            l.Add(new Item("Ottoman_01", "Pouf", Kind.Floor, 4.45f, 6.55f, 30f, S(0.8f)));
+            l.Add(new Item("ceiling_fan", "Ventilateur", Kind.Hanging, 0.9f, 6.35f, 15f, S(1f)));
+
+            // Couloirs ouest et est : bancs sous le tableau et sous l'horloge, guéridon fleuri sous le portrait, ukulélé.
+            l.Add(new Item("painted_wooden_bench", "Banc", Kind.Floor, -4.71f, 1.68f, 90f, S(1f)));
+            l.Add(new Item("painted_wooden_bench", "Banc", Kind.Floor, 4.71f, 1.68f, -90f, S(1f)));
+            l.Add(new Item("side_table_01", "Guéridon", Kind.Floor, 4.72f, -1.65f, -90f, S(1f)));
+            l.Add(new Item("potted_plant_04", "Plante de table", Kind.OnTop, 4.72f, -1.65f, 40f, S(1.2f)));
+            l.Add(new Item("Ukulele_01", "Ukulélé", Kind.Wall, WallE, 6.15f, -90f, S(1.3f), 1.45f));
+
+            // Entrée (porte de sortie au mur ouest, voir BarRoomFinish) : ardoise du menu, extincteur.
+            l.Add(new Item("standing_chalkboard_01", "Ardoise", Kind.Floor, -4.45f, -2.8f, 70f, S(1f)));
+            l.Add(new Item("korean_fire_extinguisher_01", "Extincteur", Kind.Floor, -4.8f, -0.75f, 90f, S(1f)));
+
+            // Mur sud, derrière le bar : deux étagères pleines de bouteilles, trophée au-dessus, caisses près des frigos,
+            // tonneau mange-debout et ses tabourets, panneau « sol glissant ».
+            l.Add(new Item("wooden_display_shelves_01", "Étagère à bouteilles", Kind.Floor, -2.4f, -4.74f, -90f, S(1.25f)));
+            l.Add(new Item("wooden_display_shelves_01", "Étagère à bouteilles", Kind.Floor, -0.95f, -4.74f, -90f, S(1.25f)));
+            l.Add(new Item("bull_head", "Trophée", Kind.Wall, -1.68f, WallS, 0f, S(1.6f), 2.33f));
+            l.Add(new Item("wooden_crate_01", "Caisse", Kind.Floor, 2.3f, -4.75f, 0f, S(1f)));
+            l.Add(new Item("wooden_crate_01", "Caisse", Kind.OnTop, 2.32f, -4.75f, 6f, S(1f)));
+            l.Add(new Item("wine_barrel_01", "Tonneau mange-debout", Kind.Floor, 3.55f, -3.45f, 50f, S(1f)));
+            l.Add(new Item("metal_stool_02", "Tabouret", Kind.Floor, 2.85f, -3.15f, 20f, Stool));
+            l.Add(new Item("metal_stool_02", "Tabouret", Kind.Floor, 3.8f, -2.7f, 75f, Stool));
+            l.Add(new Item("WetFloorSign_01", "Panneau sol glissant", Kind.Floor, -0.3f, -3.5f, 25f, S(1f)));
             return l;
         }
 
@@ -89,6 +122,7 @@ namespace Fragile.EditorTools
             var root = new GameObject(RootName).transform;
             root.SetParent(room.transform, false);
 
+            DecorBreakables.ResetCache();
             var prepared = new HashSet<string>();
             int placed = 0;
             foreach (var it in Layout())
@@ -103,16 +137,92 @@ namespace Fragile.EditorTools
                 go.transform.rotation = Quaternion.Euler(0f, it.rotY, 0f);
                 Place(go, it);
                 Finish(go, it.kind);
+                var spots = it.model == "wooden_display_shelves_01" ? ShelfSpots(go) : null;
+                MakeBreakable(go, it);
+                if (spots != null) FillShelf(root, go, spots);
                 Physics.SyncTransforms();   // les objets suivants (plantes de table) se posent sur celui-ci
                 placed++;
             }
             BuildNeon(root);
+            BarRoomFinish.ResetCache();
+            BarRoomFinish.Build(root);
 
             Undo.RegisterCreatedObjectUndo(root.gameObject, "Meubler le Bar");
             var scene = EditorSceneManager.GetActiveScene();
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             Debug.Log($"[Fragile] Bar meublé : {placed} objets + enseigne néon (relance « Éclairer le Bar »).");
+        }
+
+        const string Bottles = "Assets/Bar/Models/Bouteilles";
+        // Pas de flasque : vue de profil sur une étagère, on ne la reconnaît pas.
+        static readonly string[] BottleTypes = { "Whisky", "Coloree", "Korken", "Bleue", "Eau", "Whisky" };
+
+        /// <summary>
+        /// Étagère à bouteilles : repère les planches (lancers de rayons sur le maillage), remplace la boîte englobante
+        /// par une planche-collider par niveau + côtés et fond (sinon les bouteilles posées dedans seraient éjectées au lancement),
+        /// et renvoie les places libres (position monde, hauteur disponible) : deux bouteilles par case.
+        /// </summary>
+        static List<(Vector3 pos, float room)> ShelfSpots(GameObject shelf)
+        {
+            Object.DestroyImmediate(shelf.GetComponent<BoxCollider>());
+            var temp = new List<Collider>();
+            foreach (var mf in shelf.GetComponentsInChildren<MeshFilter>()) temp.Add(mf.gameObject.AddComponent<MeshCollider>());
+            Physics.SyncTransforms();
+
+            var t = shelf.transform; var lb = LocalBounds(shelf);
+            var spots = new List<(Vector3, float)>();
+            var levels = new SortedSet<float>();
+            foreach (var lz in new[] { -0.44f, -0.28f, -0.08f, 0.08f, 0.28f, 0.44f })
+            {
+                var start = t.TransformPoint(new Vector3(lb.center.x, lb.max.y + 0.05f, lz));
+                float above = float.PositiveInfinity, y = start.y;
+                for (int guard = 0; guard < 12; guard++)
+                {
+                    float best = float.NegativeInfinity;
+                    foreach (var h in Physics.RaycastAll(new Vector3(start.x, y, start.z), Vector3.down, y + 0.1f, ~0, QueryTriggerInteraction.Ignore))
+                        if (temp.Contains(h.collider) && h.normal.y > 0.7f && h.point.y < y - 0.001f) best = Mathf.Max(best, h.point.y);
+                    if (float.IsNegativeInfinity(best)) break;
+                    levels.Add(Mathf.Round(t.InverseTransformPoint(new Vector3(start.x, best, start.z)).y * 200f) / 200f);
+                    if (!float.IsPositiveInfinity(above)) spots.Add((new Vector3(start.x, best, start.z), above - best - 0.03f));
+                    above = best; y = best - 0.004f;
+                }
+            }
+            foreach (var c in temp) Object.DestroyImmediate(c);
+
+            // Colliders : planches, côtés, fond (le dos est côté −X local, l'avant ouvert côté +X).
+            foreach (var ly in levels)
+                AddBox(shelf, new Vector3(lb.center.x, ly - 0.012f, lb.center.z), new Vector3(lb.size.x, 0.024f, lb.size.z));
+            AddBox(shelf, new Vector3(lb.center.x, lb.center.y, lb.min.z + 0.01f), new Vector3(lb.size.x, lb.size.y, 0.02f));
+            AddBox(shelf, new Vector3(lb.center.x, lb.center.y, lb.max.z - 0.01f), new Vector3(lb.size.x, lb.size.y, 0.02f));
+            AddBox(shelf, new Vector3(lb.min.x + 0.01f, lb.center.y, lb.center.z), new Vector3(0.02f, lb.size.y, lb.size.z));
+            return spots;
+        }
+
+        static void AddBox(GameObject go, Vector3 center, Vector3 size)
+        {
+            var c = go.AddComponent<BoxCollider>(); c.center = center; c.size = size;
+        }
+
+        /// <summary>Bouteilles cassables et attrapables (mêmes préfabs que le comptoir et les frigos), hors de la hiérarchie de l'étagère.</summary>
+        static void FillShelf(Transform root, GameObject shelf, List<(Vector3 pos, float room)> spots)
+        {
+            var holder = new GameObject("Bouteilles " + shelf.name).transform;
+            holder.SetParent(root, false);
+            var rng = new System.Random(Mathf.RoundToInt(shelf.transform.position.x * 1000f));
+            foreach (var (pos, room) in spots)
+            {
+                // Pas dans les casiers du bas (cachés par les bacs), quelques trous : une étagère de bar n'est jamais pleine.
+                if (room < 0.33f || pos.y - shelf.transform.position.y < 0.25f || rng.NextDouble() < 0.12) continue;
+                string type = BottleTypes[rng.Next(BottleTypes.Length)];
+                if (room < 0.43f) type = "Whisky";   // 32 cm
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{Bottles}/Bouteille_{type}/Bouteille_{type}.prefab");
+                if (prefab == null) continue;
+                var b = (GameObject)PrefabUtility.InstantiatePrefab(prefab, holder);
+                b.transform.position = pos + Vector3.up * 0.002f;
+                // Face vers la salle, avec un peu de désordre.
+                b.transform.rotation = Quaternion.Euler(0f, shelf.transform.eulerAngles.y + 90f + (float)(rng.NextDouble() - 0.5) * 50f, 0f);
+            }
         }
 
         static void Prepare(string model)
@@ -160,10 +270,13 @@ namespace Fragile.EditorTools
                     pos += new Vector3(it.x - b.center.x, Ceiling - b.max.y, it.z - b.center.z);
                     break;
                 case Kind.Wall:
-                    // Collé au mur : le dos de l'objet touche le mur.
-                    var face = go.transform.forward;
+                    // Collé au mur : le dos de l'objet touche le mur. Normale du mur le plus proche (vers la salle),
+                    // et non l'avant du modèle : certains modèles (petits cadres) ont leur face côté −Z.
+                    var face = Mathf.Abs(it.x - WallW) < 0.01f ? Vector3.right : Mathf.Abs(it.x - WallE) < 0.01f ? Vector3.left
+                             : Mathf.Abs(it.z - WallS) < 0.01f ? Vector3.forward : Vector3.back;
                     float depth = Mathf.Abs(Vector3.Dot(b.size, new Vector3(Mathf.Abs(face.x), 0f, Mathf.Abs(face.z))));
-                    var onWall = new Vector3(it.x, it.y, it.z) + face * (depth * 0.5f + 0.004f);
+                    // + 1,6 cm : épaisseur du parement de briques (BarRoomFinish), sinon les cadres plats s'y enfoncent.
+                    var onWall = new Vector3(it.x, it.y, it.z) + face * (depth * 0.5f + 0.016f);
                     pos += onWall - b.center;
                     break;
             }
@@ -186,6 +299,39 @@ namespace Fragile.EditorTools
                 var lb = LocalBounds(go);
                 col.center = lb.center; col.size = lb.size;
             }
+        }
+
+        /// <summary>
+        /// Tout le mobilier se casse à la batte. Plantes de table libres (elles tombent si on casse la table),
+        /// tonneaux pleins de vin. Les cadres personnalisés ont leurs propres éclats (avec leur image).
+        /// </summary>
+        static void MakeBreakable(GameObject go, Item it)
+        {
+            // Matière et nombre de coups francs avant la casse.
+            var (matter, hits) = it.model switch
+            {
+                "potted_plant_04" => (Breakable.Matter.Ceramic, 1f),
+                "coffee_table_round_01" => (Breakable.Matter.Ceramic, 3f),
+                "dartboard" or "wall_clock" => (Breakable.Matter.Plastic, 2f),
+                "hanging_picture_frame_01" or "hanging_picture_frame_02" => (Breakable.Matter.Wood, 2f),
+                "metal_stool_02" => (Breakable.Matter.Wood, 4f),
+                "wine_barrel_01" => (Breakable.Matter.Wood, 5f),
+                "round_wooden_table_01" or "modern_arm_chair_01" => (Breakable.Matter.Wood, 6f),
+                "mid_century_lounge_chair" or "Sofa_01" => (Breakable.Matter.Wood, 7f),
+                "Ottoman_01" or "side_table_01" or "standing_chalkboard_01" => (Breakable.Matter.Wood, 3f),
+                "painted_wooden_bench" => (Breakable.Matter.Wood, 4f),
+                "wooden_display_shelves_01" => (Breakable.Matter.Wood, 5f),
+                "wooden_crate_01" or "fancy_picture_frame_01" => (Breakable.Matter.Wood, 2f),
+                "Ukulele_01" => (Breakable.Matter.Wood, 1f),
+                "bull_head" => (Breakable.Matter.Ceramic, 2f),
+                "WetFloorSign_01" => (Breakable.Matter.Plastic, 1f),
+                "korean_fire_extinguisher_01" or "ceiling_fan" => (Breakable.Matter.Metal, 3f),
+                "lantern_chandelier_01" => (Breakable.Matter.Metal, 2f),
+                _ => (Breakable.Matter.Wood, 4f),
+            };
+            bool barrel = it.model == "wine_barrel_01";
+            DecorBreakables.Make(go, it.model + (it.artwork != null ? "_" + it.artwork : ""), matter, hits,
+                dynamic: it.kind == Kind.OnTop, liquid: barrel, liquidColor: barrel ? new Color(0.45f, 0.04f, 0.1f, 0.9f) : (Color?)null);
         }
 
         /// <summary>Remplace l'œuvre d'un cadre par une image de Assets/Bar/Tableaux (matériau propre, posé dans la scène).</summary>
@@ -277,7 +423,8 @@ namespace Fragile.EditorTools
             float best = 0f;
             foreach (var h in Physics.RaycastAll(new Vector3(p.x, 2.6f, p.z), Vector3.down, 3f, ~0, QueryTriggerInteraction.Ignore))
             {
-                if (h.collider.transform.IsChildOf(self.transform) || h.collider.attachedRigidbody != null) continue;  // pas sur une bouteille
+                var body = h.collider.attachedRigidbody;
+                if (h.collider.transform.IsChildOf(self.transform) || (body != null && !body.isKinematic)) continue;  // pas sur une bouteille
                 if (h.normal.y > 0.7f && h.point.y > best) best = h.point.y;
             }
             return best;

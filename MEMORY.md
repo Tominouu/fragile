@@ -38,8 +38,17 @@ Assets/
                                    + préfabs créés en jeu : Glacon.prefab, Canette_<couleur>.prefab
     Models/Mobilier/<id>/          mobilier Poly Haven (CC0, sans attribution) : tabourets, tables, fauteuils, salon, plantes,
                                    tonneaux, cadres, cible, horloge. Importé par Tools/Blender/import_polyhaven.py
+    Models/Mobilier/Habillage/     maillages générés par BarRoomFinish (boîtes à UV en mètres : lambris, briques, poutres, porte, tapis)
+    Textures/PolyHaven/<id>/       textures CC0 (briques red_brick_03, lambris dark_wooden_planks, tapis quatrefoil_jacquard_fabric)
     Tableaux/                      photos de l'équipe dans 2 cadres (Item.artwork de BarFurnitureBuilder) : image recadrée
                                    dans la bande U 0,16 → 0,84 d'une texture carrée 1024 (zone d'image du cadre)
+    Armes/                         Pistolet, Carabine, Fusil_pompe + munitions Cartouche_12, Cartouche_762, Chargeur_Pistolet
+                                   (.prefab, générés par « Placer les armes ») ;
+                                   Modeles/ : service_pistol + bolt_action_rifle_7_62 (Poly Haven CC0, importés avec
+                                   FRAGILE_SUB=Bar/Armes/Modeles ; Read/Write activé : la prise mesure leurs sommets),
+                                   Fusil_Pompe + Cartouche_12 (modélisés par Tools/Blender/build_shotgun.py, type 870, pompe séparée ;
+                                   bois = Tools/Blender/textures/noyer_crosse_*, dérivé de smoked_walnut_veneer CC0) ;
+                                   FX/ : textures générées (impact de balle, flamme, traçante), matériaux des boîtes
     Resources/Surbrillance.mat     matériau de surbrillance (dans Resources pour que le shader soit dans le build)
     Lighting/                      luminaires (maillages, matériaux) + réglages de lightmapping
   Hands/                           mains réalistes générées (maillage + texture peau) ; Detail/ = normal map de pores (CC BY 4.0, voir CREDITS.txt)
@@ -66,6 +75,27 @@ Assets/
     Bar/                           comportements des appareils : BeerTap, CashRegister, CoffeeMachine, VendingMachine, IceBin,
                                    LiquidStream (filet de bière/café), TimedDespawn, ImpactSound
     Audio/Sfx.cs                   bruitages générés par code (touches, caisse, tiroir, liquides, pompe, moteur, canette, glaçon, vapeur)
+    Weapons/Firearm.cs             arme à feu : tir à la gâchette (activate XRI) par rayons -> Breakable.Shot (casse / usure du décor),
+                                   GlassPane/TvBreakable.Hit, ImpactMarks, poussée, impacts sur les murs ; flamme, traçantes, recul
+                                   (pièce « Recul » où la main est accrochée), douilles. Vrai cycle de munitions (chambre vide /
+                                   chargée / percutée, magasin ou chargeur) : rien ne part sans cartouche chambrée (sinon « clic »).
+                                   m_InfiniteAmmo (vrai par défaut, choix de Tom) : magasins et chargeurs inépuisables, il faut
+                                   seulement armer (pompe, verrou ; le pistolet se réarme seul) ; décocher pour le rechargement réel.
+                                   Fusil : pompe arrière = éjection, avant = chambrage ; carabine : levier relevé, verrou tiré/poussé,
+                                   levier rabattu ; pistolet : culasse automatique, bloquée ouverte à vide, chargeur éjecté au bouton
+                                   A/X de la main qui le tient. m_StartRacked : cinématique sur son râtelier jusqu'au premier lâcher
+    Weapons/GunHandle.cs           2e prise (autre main) : Support (garde-main), Pump, Slide, Bolt ; saisissable seulement si l'arme
+                                   est tenue ; la main suit la pièce, la vraie manette la pilote (déplacement projeté sur la course)
+    Weapons/TwoHandAim.cs          transformateur de prise XRI (après XRGeneralGrabTransformer) : l'arme pivote autour de la poignée
+                                   vers la main d'appui
+    Weapons/ReloadGuide.cs         aide au rechargement (ajoutée par Firearm) : si l'arme tenue ne peut pas tirer
+                                   (Firearm.GetGuide), la pièce à actionner pulse en ambre (calques « Aide », shader Surbrillance) et
+                                   une flèche en chevrons montre le geste (tourné vers Camera.main) ; pistolet sans chargeur :
+                                   silhouette du chargeur + plateau le plus proche allumé. Le survol des poignées GunHandle allume
+                                   désormais la pièce déplacée (InteractableHighlight -> highlightRoot)
+    Weapons/AmmoItem, LoadZone, AmmoBox   munition attrapable ; zone de chargement (trigger : trappe, fenêtre, puits du chargeur ;
+                                   n'accepte qu'une munition TENUE en main, sinon la cartouche éjectée se rechargerait seule) ;
+                                   boîte inépuisable (la saisir met une munition dans la main)
     Music/Turntable, PanelButton, PanelKnob, FingerTips   platine vinyle ; bouton poussé au doigt, molette tournée au poignet (réutilisables)
     XR/SimulatorIfNoHeadset.cs     simulateur XR seulement si aucun casque (attend jusqu'à 4 s le démarrage OpenXR)
     Editor/                        outils (menus ci-dessous)
@@ -89,7 +119,9 @@ Tools/Blender/fragile_unity_export.py   addon Blender « Fragile - Export vers U
 | Rendre les télés destructibles | `TvBreakable` sur chaque télé : fissures -> écran mort (éclats, étincelles) -> chute. Les télés ne sont plus « Batching Static » (sinon elles ne peuvent pas tomber) |
 | Éclairer le Bar | luminaires + lightmaps + light probes + sonde (environ 1 min de calcul). À relancer si on déplace murs, comptoir ou télés |
 | Aménager le décor du Bar | pose les appareils de `Models/Decor` (positions dans `BarDecorBuilder.Spots`), BoxCollider, statiques, émission des écrans/néons (l'addon n'exporte pas l'émission). Frigos : porte `HingedDoor` (saisie par la poignée), vitre séparée et cassable (`GlassPane`), parois en boîtes, 15 bouteilles cassables chacun. Interactions des autres appareils : `BarDecorInteractions.cs`. Seul l'enfant « Corps » est statique. Instances détachées du FBX (unpack) pour pouvoir réorganiser les pièces. Relancer « Éclairer le Bar » après |
-| Meubler le Bar | pose le mobilier de `Models/Mobilier` (disposition dans `BarFurnitureBuilder.Layout`), échelles corrigées (tabourets étirés à 74 cm, tables ×0,75), vitres des cadres en verre simple, enseigne néon « FRAGILE » (TextMeshPro + lumière baked). Au-dessus de chaque objet « Table », « Éclairer le Bar » pose la même suspension en laiton que sur le comptoir (lancer Meubler AVANT Éclairer) ; plus de spots encastrés au plafond. Tout statique. Relancer « Éclairer le Bar » après |
+| Meubler le Bar | pose le mobilier de `Models/Mobilier` (disposition dans `BarFurnitureBuilder.Layout`), échelles corrigées (tabourets étirés à 74 cm, tables ×0,75), vitres des cadres en verre simple, enseigne néon « FRAGILE » (TextMeshPro + lumière baked). Au-dessus de chaque objet « Table », « Éclairer le Bar » pose la même suspension en laiton que sur le comptoir (lancer Meubler AVANT Éclairer) ; plus de spots encastrés au plafond. Tout statique. Relancer « Éclairer le Bar » après. Appelle aussi `BarRoomFinish` (habillage : lambris 1 m sur tous les murs, parement de briques au nord, poutres au plafond, porte de sortie + panneau SORTIE au mur ouest z = −1,66, tapis). Les étagères à bouteilles du mur sud ont des colliders par planche (pas de boîte englobante : elle éjecterait les bouteilles) et sont garnies avec les préfabs de bouteilles (pas de flasque, pas dans les bacs du bas). Les objets muraux sont décollés de 1,6 cm (épaisseur des briques) et orientés selon la normale du mur, pas l'avant du modèle |
+| (casse du décor) | Aménager/Meubler rendent TOUT cassable via `DecorBreakables.Make(go, clé, matière, coups)` : pièces fusionnées puis découpées EN PIÈCES (îlots de maillage : pieds, assise, panneaux, touches, douelles ; grosses pièces fendues en 2-4, métal cabossé) — céramique seule en éclats de Voronoï, éclats dans `Assets/Bar/Casse` partagés par modèle. Plusieurs coups selon l'objet (`m_Hits` de Breakable : bouteille 1, chaise 6, frigo 8, distributeur 10…) : dès le 1er coup l'objet est remplacé par ses pièces en place qui se disjoignent à chaque coup (fissures visibles, `Breakable.Crack`), + marque (Degats_<matière>), fait trembler l'objet et sonne selon la matière. Rigidbody cinématique, pas de Batching Static (tremblement) mais lightmappé. Plantes de table libres, bouteilles des frigos hors de leur hiérarchie. Limite : l'ombre précalculée d'un objet cassé reste |
+| Placer les armes | fabrique les 3 préfabs d'armes et leurs munitions (racine = centre de la poignée ; Visuals > Recul > Modèle ; poignée invisible mesurée par GripSurface ; colliders en tranches ; poignées secondaires GunHandle ; zone de chargement ; liste de colliders de l'arme SANS ceux des poignées, réglée via SerializedObject « m_Colliders » — l'API `colliders` n'était pas enregistrée dans le préfab) et les pose : fusil à pompe sur râtelier sous l'enseigne FRAGILE + boîte de cartouches sur une tablette, carabine sur râtelier au mur sud + boîte sur la caisse, pistolet sur le comptoir près de la caisse + plateau de chargeurs. Réglages de chaque arme dans `WeaponBuilder` (Spec : poignée, bouche, dégâts, recul…). Râteliers non GI-statiques : pas besoin de relancer l'éclairage |
 | Rendre le marbre marquable | génère la texture d'impacts (`Assets/Bar/FX/Impacts`) et pose `ImpactMarks` sur le comptoir |
 | Animer la platine vinyle | branche bouton marche/arrêt, molette de volume, disque, bras, égaliseur et son sur la platine de la scène |
 
@@ -110,6 +142,9 @@ Tools/Blender/fragile_unity_export.py   addon Blender « Fragile - Export vers U
 - **Frigo vitrine** : le FBX n'est PAS un export direct du .blend : la porte est séparée (pivot sur la charnière) et les étagères passent de 4 à 2 (bouteilles de 42 cm). Tous les appareils se ré-exportent avec `Tools/Blender/export_interactif.py` (pas l’addon seul, sinon les pièces mobiles sont perdues). Sa vitre utilise `Frigo_Vitre.mat` (URP Lit transparent, posé dans la scène) : `Fragile/Verre` est opaque (recopie l'Opaque Texture) et cacherait les bouteilles en verre derrière.
 - **Un composant = un fichier au même nom** (sinon « Missing Script » au rechargement de la scène).
 - **On ne peut pas reparenter les enfants d'une instance de préfab** (FBX posé dans la scène) : l'appel échoue sans bruit. Détacher l'instance (`UnpackPrefabInstance`) avant.
+- **Prise orientée (armes)** : `GripSurface.m_FixedAim` -> `ControllerHandPose.BeginAimedGrab` : la poignée s'aligne sur la ligne
+  des jointures (auriculaire -> index) et le canon sur la direction du poing (paume -> base du majeur). NE PAS viser selon l'avant
+  de la manette : sur Quest il suit le manche (canon parti dans l'axe de la poignée). L'axe de prise passe par l'origine de l'objet.
 - Le liquide est rendu en file 2500 (avant le verre transparent) pour être vu à travers la réfraction.
 - Physique à **72 Hz** (`TimeManager`) ; le laser de saisie (far casting) est **désactivé** : on n'attrape qu'à la main.
 - MCP Unity (CoplayDev unity-mcp v10.3.0, http://127.0.0.1:8080) : se déconnecte souvent après recompilation / redémarrage → `/mcp` > Reconnect, et dans Unity *Window > MCP for Unity* > Start.
@@ -118,6 +153,8 @@ Tools/Blender/fragile_unity_export.py   addon Blender « Fragile - Export vers U
 ## Sources des modèles
 - Ajouter du mobilier : chercher sur Poly Haven (CC0), puis `blender -b --factory-startup --python Tools/Blender/import_polyhaven.py -- <id> ...`,
   puis ajouter une ligne dans `BarFurnitureBuilder.Layout`. Surveiller les triangles (Quest) : préférer < 10 k par objet répété.
+  Mesurer les modèles avant (certains contiennent plusieurs variantes côte à côte : fern_02, anthurium_botany_01 écartés).
+- Scène complète ≈ 560 k triangles visibles (nov. 2026) : à surveiller sur Quest.
 
 ## Idées en attente
 - Main Tripo (plus détaillée) abandonnée : nécessiterait un vrai rig fait dans Blender + licence vérifiée.

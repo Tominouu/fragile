@@ -1,0 +1,29 @@
+{
+  "objectName": "ceiling_fan",
+  "fbx": "ceiling_fan.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "ceiling_fan",
+      "baseColor": "ceiling_fan_baseColor.jpg",
+      "normal": "ceiling_fan_normal.jpg",
+      "roughness": "ceiling_fan_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/ceiling_fan (CC0)"
+}

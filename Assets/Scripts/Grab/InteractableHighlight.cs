@@ -110,9 +110,12 @@ namespace Fragile.Grab
         {
             Transform root = transform;
             if (m_Interactable is PanelKnob knob && knob.model != null) root = knob.model;
+            // Poignée d'arme (pompe, culasse, levier) : on allume la pièce qu'elle déplace.
+            if (m_Interactable is Fragile.Weapons.GunHandle handle && handle.highlightRoot != null) root = handle.highlightRoot;
             foreach (var r in root.GetComponentsInChildren<MeshRenderer>(true))
             {
                 if (r.isPartOfStaticBatch || r.GetComponentInParent<GlassPane>() != null) continue;
+                if (r.name == "Surbrillance" || r.name == "Aide") continue;   // calques déjà posés (aide au rechargement)
                 var owner = r.GetComponentInParent<XRBaseInteractable>(true);
                 if (owner != null && owner != m_Interactable && root == transform) continue;
                 yield return r;

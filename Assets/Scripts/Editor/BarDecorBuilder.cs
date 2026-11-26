@@ -44,6 +44,7 @@ namespace Fragile.EditorTools
             foreach (var s in Spots) PrepareModel(s.model);
             SetupEmission();
             BarDecorInteractions.EnsureHighlightMaterial();
+            DecorBreakables.ResetCache();
 
             var old = room.transform.Find(RootName);
             if (old != null) Undo.DestroyObjectImmediate(old.gameObject);
@@ -84,8 +85,24 @@ namespace Fragile.EditorTools
                     col.center = lb.center; col.size = lb.size;
                 }
                 BarDecorInteractions.Setup(go, s.model);
+
+                // Cassable à la batte. Les bouteilles du frigo sortent de sa hiérarchie : s'il casse, elles tombent
+                // (et se brisent) au lieu de disparaître avec lui.
+                var bottles = go.transform.Find("Bouteilles");
+                if (bottles != null) { bottles.SetParent(root, true); bottles.name = "Bouteilles " + s.name; }
+                // Coups francs avant la casse : les gros appareils encaissent beaucoup.
+                float hits = s.model switch
+                {
+                    "Tireuse_Biere" => 4f, "Caisse_Enregistreuse" => 5f, "Machine_Cafe" => 5f,
+                    "Machine_Glacons" => 6f, "Refrigerateur_Vitrine" => 8f, "Distributeur_Boissons" => 10f, _ => 5f,
+                };
+                DecorBreakables.Make(go, s.model, Fragile.Breakables.Breakable.Matter.Metal, hits);
                 log.Append($"\n  {s.name} : ({s.x:F2}, {surface:F2}, {s.z:F2})");
             }
+
+            // La platine vinyle (posée à part) se casse aussi.
+            var turntable = GameObject.Find("Vinyl_Record_Player_Retro_Turntable_002");
+            if (turntable != null) DecorBreakables.Make(turntable, "Platine", Fragile.Breakables.Breakable.Matter.Plastic, 3f);
 
             Undo.RegisterCreatedObjectUndo(root.gameObject, "Aménager le décor du Bar");
             var scene = EditorSceneManager.GetActiveScene();

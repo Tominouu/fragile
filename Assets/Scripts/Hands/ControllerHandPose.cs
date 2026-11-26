@@ -178,6 +178,8 @@ namespace Fragile.Hands
                 m_HomeParent.TransformPoint(m_HomeLocalPosition),
                 m_HomeParent.rotation * m_HomeLocalRotation);
 
+            if (surface.fixedAim) return BeginAimedGrab(surface, handHomeWorld, out handInObject);
+
             // 1) Orientation : l'axe des jointures (auriculaire -> index) s'aligne sur l'axe de l'objet.
             var handRot = handHomeWorld.rotation;
             var gripAxis = handRot * m_GripAxisLocal;
@@ -221,6 +223,61 @@ namespace Fragile.Hands
             handInObject = new Pose(
                 objT.InverseTransformPoint(transform.position),
                 Quaternion.Inverse(objT.rotation) * transform.rotation);
+            return true;
+        }
+
+        /// <summary>
+        /// Prise d'une arme : la main reste où elle est sur la manette, c'est l'objet qui se place, toujours de la même
+        /// façon : sa poignée suit la ligne des jointures (auriculaire -> index), son canon la direction du poing
+        /// (paume -> base du majeur), et la poignée vient dans la paume, au milieu de la zone saisissable.
+        /// (L'avant de la manette, lui, suit son manche : il ne convient pas comme direction de visée.)
+        /// </summary>
+        bool BeginAimedGrab(GripSurface surface, Pose handHomeWorld, out Pose handInObject)
+        {
+            handInObject = default;
+            var handRot = handHomeWorld.rotation;
+            var palmWorld = handHomeWorld.position + handRot * m_PalmLocal;
+
+            var knuckles = (handRot * m_GripAxisLocal).normalized;
+            // La main est à sa place sur la manette (pas encore de prise) : la base du majeur y est à jour.
+            var middle = m_Bones[2][0] != null ? m_Bones[2][0].position : palmWorld + handRot * Vector3.forward;
+            var fist = Vector3.ProjectOnPlane(middle - palmWorld, knuckles);
+            if (fist.sqrMagnitude < 1e-8f) fist = Vector3.ProjectOnPlane(m_HomeParent.forward, knuckles);
+            var axisL = surface.localAxis.normalized;
+            var aimL = Vector3.ProjectOnPlane(surface.aimLocalRotation * Vector3.forward, axisL);
+            var objRot = Quaternion.LookRotation(fist.normalized, knuckles) * Quaternion.Inverse(Quaternion.LookRotation(aimL.normalized, axisL));
+            var axisW = (objRot * axisL).normalized;
+
+            var normal = Vector3.ProjectOnPlane(handRot * m_PalmNormalLocal, axisW).normalized;   // de la paume vers la poignée
+            float z = surface.gripCenterZ;
+            var axisPointWanted = palmWorld + normal * (surface.RadiusAt(z) + m_PalmThickness);
+            // L'axe passe par l'origine de l'objet : point de l'axe à z = origine + axe * z.
+            var objPos = axisPointWanted - axisW * z;
+
+            // Main exprimée dans le repère de l'objet, puis replacée sur l'objet là où il est encore.
+            var inv = Quaternion.Inverse(objRot);
+            var localPos = inv * (handHomeWorld.position - objPos);
+            var localRot = inv * handRot;
+            var objT = surface.transform;
+            var pos = objT.TransformPoint(localPos);
+            var rot = objT.rotation * localRot;
+
+            m_Holding = surface;
+            transform.SetParent(surface.handParent, false);
+            transform.SetPositionAndRotation(pos, rot);
+            ComputeWrap(surface);
+            ApplyAngles(m_HoldAngles);
+            ResolveSkinPenetration(surface, rot * m_PalmNormalLocal);
+
+            var p = transform.position;
+            if (float.IsNaN(p.x) || float.IsNaN(p.y) || float.IsNaN(p.z))
+            {
+                Debug.LogWarning("[Fragile] Prise annulée : position de main invalide.");
+                EndGrab();
+                return false;
+            }
+            // La pose finale de la main (éventuellement reculée pour ne pas traverser) définit la prise.
+            handInObject = new Pose(objT.InverseTransformPoint(transform.position), Quaternion.Inverse(objT.rotation) * transform.rotation);
             return true;
         }
 

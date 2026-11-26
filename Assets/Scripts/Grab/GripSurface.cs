@@ -13,6 +13,23 @@ namespace Fragile.Grab
         [SerializeField] float m_EndMargin = 0.04f;
         [Tooltip("Axe long de l'objet, dans son repère local (batte : Z, bouteille debout : Y).")]
         [SerializeField] Vector3 m_LocalAxis = Vector3.forward;
+        [Tooltip("Maillages mesurés pour la prise (ex. poignée d'une arme). Vide = tout l'objet. L'axe passe par l'origine de l'objet.")]
+        [SerializeField] Transform m_Source;
+
+        [Header("Prise orientée (armes)")]
+        [Tooltip("L'objet est toujours tenu de la même façon : sa direction de visée suit celle de la manette.")]
+        [SerializeField] bool m_FixedAim;
+        [Tooltip("Direction de visée (canon) dans le repère local.")]
+        [SerializeField] Vector3 m_AimLocal = Vector3.forward;
+        [Tooltip("Haut de l'objet dans le repère local.")]
+        [SerializeField] Vector3 m_UpLocal = Vector3.up;
+
+        public bool fixedAim => m_FixedAim;
+        /// <summary>Rotation locale dont l'avant est la visée et le haut celui de l'objet.</summary>
+        public Quaternion aimLocalRotation => Quaternion.LookRotation(m_AimLocal, m_UpLocal);
+        /// <summary>Milieu de la zone saisissable (coordonnée le long de l'axe).</summary>
+        public float gripCenterZ { get { if (m_Radius == null) Build(); return (m_ZMin + m_ZMax) / 2f; } }
+        public Vector3 localAxis => m_LocalAxis;
 
         /// <summary>Rotation qui amène l'axe de l'objet sur Z (repère de calcul de la surface).</summary>
         Quaternion ToZ => Quaternion.FromToRotation(m_LocalAxis.sqrMagnitude > 1e-6f ? m_LocalAxis.normalized : Vector3.forward, Vector3.forward);
@@ -44,7 +61,7 @@ namespace Fragile.Grab
 
         public void Build()
         {
-            var filters = GetComponentsInChildren<MeshFilter>();
+            var filters = (m_Source != null ? m_Source : transform).GetComponentsInChildren<MeshFilter>(true);
             m_ZMin = float.MaxValue; m_ZMax = float.MinValue;
             var points = new System.Collections.Generic.List<Vector3>();
             var toZ = ToZ;
