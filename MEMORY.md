@@ -99,7 +99,7 @@ Assets/
     Weapons/AmmoItem, LoadZone, AmmoBox   munition attrapable ; zone de chargement (trigger : trappe, fenêtre, puits du chargeur ;
                                    n'accepte qu'une munition TENUE en main, sinon la cartouche éjectée se rechargerait seule) ;
                                    boîte inépuisable (la saisir met une munition dans la main) — plus posée dans le Bar (nov. 2026 : munitions infinies, boîtes retirées)
-    Mice/Mouse.cs                  souris (6, modèle Poly Haven street_rat CC0 allégé à ~3 500 triangles) : trottinent le long des murs,
+    Mice/Mouse.cs                  souris (2, cris discrets ; modèle Poly Haven street_rat CC0 allégé à ~3 500 triangles) : trottinent le long des murs,
                                    contournent les meubles (SphereCast), restent au sol, fuient le joueur et le bruit (Mouse.ScareAll
                                    appelé par Firearm et Breakable) vers un trou. Meurent : batte (vers le bas = écrasée), objet lancé,
                                    balle (IHittable : poussée -> vol plané). Animation procédurale (pas de squelette).

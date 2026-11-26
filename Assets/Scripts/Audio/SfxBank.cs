@@ -19,13 +19,20 @@ namespace Fragile.Audio
         public const string EtagereBouteille = "EtagereBouteille", VerreVinCasse = "Verre_Vin_Casse", ShotCasse = "ShotCasse";
         public const string MiroirFissure = "Miroir_Fissure", BouteilleRoulement = "Bouteille_Roulement";
         public const string CannetteEcrasee = "Cannette_Ecrasee", CannettePercee = "Cannette_Percee";
-        public const string GobeletEcrase = "GobeletEcrase", PlastiqueCraque = "PlastiqueCraque", PasDebris = "Pas_Debris";
+        public const string GobeletEcrase = "GobeletEcrase", PlastiqueCraque = "PlastiqueCraque", PasDebris = "Pas_Debris", PasParquet = "Pas_Parquet";
         public const string DouillePistolet = "Douille_Pistolet", DouilleCarabine = "Douille_Carabine", DouillePlastique = "Douille_Plastique";
         public const string PompeArriere = "Pompe_Arriere", PompeAvant = "Pompe_Avant";
         public const string VerrouReleve = "Verrou_Releve", VerrouTire = "Verrou_Tire", VerrouPousse = "Verrou_Pousse", VerrouRabattu = "Verrou_Rabattu";
 
         static readonly Dictionary<string, AudioClip[]> s_Clips = new Dictionary<string, AudioClip[]>();
         static readonly Dictionary<string, int> s_Last = new Dictionary<string, int>();
+
+        /// <summary>
+        /// Lancement du jeu : on oublie ce qui a été chargé avant. Le projet ne recharge pas les scripts à chaque Play,
+        /// donc sans ça une famille ajoutée pendant une partie resterait vide aux parties suivantes.
+        /// </summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetCache() { s_Clips.Clear(); s_Last.Clear(); }
 
         /// <summary>Toutes les variantes d'une famille (chargées une fois, puis gardées).</summary>
         public static AudioClip[] Clips(string family)
@@ -35,7 +42,8 @@ namespace Fragile.Audio
             {
                 clips = Resources.LoadAll<AudioClip>("Sons/" + family);
                 System.Array.Sort(clips, (a, b) => string.CompareOrdinal(a.name, b.name));
-                s_Clips[family] = clips;
+                // Une famille vide n'est pas retenue : si ses sons arrivent plus tard, ils seront trouvés.
+                if (clips.Length > 0) s_Clips[family] = clips;
             }
             return clips;
         }

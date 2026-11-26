@@ -52286,7 +52286,7 @@ MonoBehaviour:
   - {fileID: 472544736}
   - {fileID: 1050225198}
   - {fileID: 2093120414}
-  m_Population: 6
+  m_Population: 2
   m_RespawnDelay: {x: 5, y: 12}
   m_Bounds: {x: -4.9, y: 4.9, z: -4.9, w: 8.27}
   m_PoolMaterial: {fileID: 2100000, guid: 65624e947ddc34a448a3c4d523f492d4, type: 2}

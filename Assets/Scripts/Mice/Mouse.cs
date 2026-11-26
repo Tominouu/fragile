@@ -53,7 +53,7 @@ namespace Fragile.Mice
             if (m_Visual != null) { m_VisualHome = m_Visual.localPosition; m_VisualHomeRot = m_Visual.localRotation; m_VisualScale = m_Visual.localScale; }
             m_Heading = transform.forward;
             m_Timer = Random.Range(0.3f, 1.5f);
-            m_NextSqueak = Time.time + Random.Range(3f, 10f);
+            m_NextSqueak = Time.time + Random.Range(8f, 20f);
         }
 
         void OnEnable() => s_All.Add(this);
@@ -89,8 +89,8 @@ namespace Fragile.Mice
 
             if (Time.time > m_NextSqueak)
             {
-                Sfx.PlayAt(Sfx.Squeak, pos, m_State == State.Flee ? 0.5f : 0.25f, Random.Range(0.85f, 1.2f));
-                m_NextSqueak = Time.time + (m_State == State.Flee ? Random.Range(0.6f, 1.5f) : Random.Range(5f, 14f));
+                Sfx.PlayAt(Sfx.Squeak, pos, m_State == State.Flee ? 0.18f : 0.08f, Random.Range(0.85f, 1.2f));   // discrètes
+                m_NextSqueak = Time.time + (m_State == State.Flee ? Random.Range(1.5f, 3f) : Random.Range(12f, 30f));
             }
             Animate(dt);
         }
@@ -164,7 +164,7 @@ namespace Fragile.Mice
             if (m_State == State.Dead) return;
             m_State = State.Flee;
             m_Target = m_Nest != null ? m_Nest.NearestHole(m_Body.position) : m_Body.position - m_Heading;
-            m_NextSqueak = Time.time;
+            m_NextSqueak = Mathf.Min(m_NextSqueak, Time.time + Random.Range(0.3f, 1.5f));   // chaque coup de feu ne relance pas un cri
         }
 
         void Animate(float dt)
@@ -240,8 +240,8 @@ namespace Fragile.Mice
             }
 
             Bleed(point, direction, strength);
-            Sfx.PlayAt(Sfx.MouseDeath, point, 0.7f, Random.Range(0.9f, 1.15f));
-            Sfx.PlayAt(Sfx.Splat, point, Mathf.Lerp(0.5f, 1f, strength), Random.Range(0.85f, 1.1f));
+            Sfx.PlayAt(Sfx.MouseDeath, point, 0.35f, Random.Range(0.9f, 1.15f));
+            Sfx.PlayAt(Sfx.Splat, point, Mathf.Lerp(0.3f, 0.6f, strength), Random.Range(0.85f, 1.1f));
             ScareAll(point, 2.5f);
             StartCoroutine(Death(strength, squash));
         }

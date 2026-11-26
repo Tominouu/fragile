@@ -13,7 +13,7 @@ namespace Fragile.Mice
         [SerializeField] Mouse m_Prefab;
         [Tooltip("Trous : position devant le trou, axe Z vers la salle.")]
         [SerializeField] Transform[] m_Holes;
-        [SerializeField] int m_Population = 6;
+        [SerializeField] int m_Population = 2;
         [SerializeField] Vector2 m_RespawnDelay = new Vector2(5f, 12f);
         [Tooltip("Zone où elles se promènent (x min, x max, z min, z max).")]
         [SerializeField] Vector4 m_Bounds = new Vector4(-4.85f, 4.85f, -4.85f, 8.2f);
