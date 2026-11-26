@@ -1,0 +1,49 @@
+{
+  "objectName": "wall_clock",
+  "fbx": "wall_clock.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "wall_clock",
+      "baseColor": "wall_clock_baseColor.jpg",
+      "normal": "wall_clock_normal.jpg",
+      "roughness": "wall_clock_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "wall_clock_glass",
+      "baseColor": "",
+      "normal": "",
+      "roughness": "wall_clock_glass_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        0.9063317593127924,
+        0.9063317593127924,
+        0.9063317593127924,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.95,
+      "transparent": true
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/wall_clock (CC0)"
+}

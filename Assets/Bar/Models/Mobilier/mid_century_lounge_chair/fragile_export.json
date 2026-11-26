@@ -1,0 +1,29 @@
+{
+  "objectName": "mid_century_lounge_chair",
+  "fbx": "mid_century_lounge_chair.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "mid_century_lounge_chair",
+      "baseColor": "mid_century_lounge_chair_baseColor.jpg",
+      "normal": "mid_century_lounge_chair_normal.jpg",
+      "roughness": "mid_century_lounge_chair_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/mid_century_lounge_chair (CC0)"
+}

@@ -145,22 +145,23 @@ namespace Fragile.EditorTools
         {
             var flap = root.Find("Trappe");
             if (flap == null) return;
-            // Charnière horizontale en haut : on oriente un pivot pour que son Y local soit l'axe de la charnière,
-            // la poignée vers son −X (en bas) et l'ouverture vers son +Z (l'avant). HingedDoor fait le reste.
+            // Charnière horizontale en bas, poignée en haut : la trappe bascule vers l'avant (vers soi).
+            // On oriente un pivot pour que son Y local soit l'axe de la charnière, la poignée vers son −X (en haut)
+            // et l'ouverture vers son +Z (l'avant). HingedDoor fait le reste.
             var hinge = new GameObject("Charnière trappe").transform;
             hinge.SetParent(root, false);
             hinge.localPosition = flap.localPosition;
-            hinge.localRotation = Quaternion.LookRotation(Vector3.forward, Vector3.left);
+            hinge.localRotation = Quaternion.LookRotation(Vector3.forward, Vector3.right);
             flap.SetParent(hinge, true);
             AddBox(flap);
             var rb = hinge.gameObject.AddComponent<Rigidbody>();
             rb.isKinematic = true; rb.interpolation = RigidbodyInterpolation.Interpolate;
             var door = hinge.gameObject.AddComponent<HingedDoor>();
             var so = new SerializedObject(door);
-            so.FindProperty("m_MaxAngle").floatValue = 110f;      // au-delà de la verticale, elle reste ouverte
-            so.FindProperty("m_SelfClose").floatValue = 260f;     // son poids la rabat
-            so.FindProperty("m_SelfCloseZone").floatValue = 95f;
-            so.FindProperty("m_MagnetZone").floatValue = 3f;
+            so.FindProperty("m_MaxAngle").floatValue = 85f;       // butée : presque à l'horizontale
+            so.FindProperty("m_SelfClose").floatValue = 80f;      // le joint la rappelle quand elle est presque fermée
+            so.FindProperty("m_SelfCloseZone").floatValue = 15f;
+            so.FindProperty("m_MagnetZone").floatValue = 4f;
             so.FindProperty("m_Friction").floatValue = 2.5f;
             so.FindProperty("m_Bounce").floatValue = 0.1f;
             so.FindProperty("m_DoorMass").floatValue = 3f;

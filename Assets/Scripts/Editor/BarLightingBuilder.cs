@@ -9,7 +9,7 @@ namespace Fragile.EditorTools
 {
     /// <summary>
     /// Fragile > Éclairer le Bar : éclairage complet de la pièce, entièrement précalculé (lightmaps + light probes + sonde de réflexion).
-    /// Suspensions au-dessus du comptoir, bandeaux LED sous le plateau, corniche lumineuse, appliques murales, spots de plafond, lueur des télés.
+    /// Suspensions au-dessus du comptoir, bandeaux LED sous le plateau, corniche lumineuse, appliques murales, lueur des télés.
     /// Seule lumière temps réel : une directionnelle faible (Mixed / Subtractive) pour le modelé et l'ombre des objets mobiles.
     /// Relancer reconstruit l'éclairage à neuf, puis relance le calcul.
     /// </summary>
@@ -65,7 +65,8 @@ namespace Fragile.EditorTools
             CounterLeds(led);
             Cove(xMin, xMax, zMin, zMax, top, wood);
             Sconces(xMin, xMax, zMin, zMax, brass, bulb);
-            Downlights(zMax, top, black, bulb);
+            // Plus de spots ronds encastrés au plafond (retirés à la demande) : le coin repas est éclairé par
+            // les suspensions en laiton posées au-dessus des tables (voir Pendants).
             TvGlow();
             BuildFixtureMeshes();
 
@@ -96,7 +97,10 @@ namespace Fragile.EditorTools
 
         // ------------------------------------------------------------------ luminaires
 
-        /// <summary>Huit suspensions dômes en laiton, deux par côté du comptoir : flaques de lumière sur le marbre et les bouteilles.</summary>
+        /// <summary>
+        /// Suspensions dômes en laiton : deux par côté du comptoir (flaques de lumière sur le marbre et les bouteilles)
+        /// et une au-dessus de chaque table du mobilier. Lancer « Meubler le Bar » avant pour avoir celles des tables.
+        /// </summary>
         static void Pendants(float top, Material brass, Material black, Material bulb, Material inner)
         {
             var dome = Lathe(new[] { new Vector2(0.030f, 0.17f), new Vector2(0.045f, 0.16f), new Vector2(0.055f, 0.12f), new Vector2(0.10f, 0.085f), new Vector2(0.138f, 0.04f), new Vector2(0.15f, 0f) }, false);
@@ -108,6 +112,12 @@ namespace Fragile.EditorTools
                     positions.Add(new Vector3(s * 2.38f, PendantY, a));
                     positions.Add(new Vector3(a, PendantY, s * 2.55f));
                 }
+            // Les mêmes au-dessus des tables du coin repas (posées par Fragile > Meubler le Bar).
+            var furniture = GameObject.Find("Mobilier");
+            if (furniture != null)
+                foreach (Transform t in furniture.transform)
+                    if (t.name == "Table" && t.TryGetComponent<Collider>(out var col))
+                        positions.Add(new Vector3(col.bounds.center.x, PendantY, col.bounds.center.z));
             foreach (var p in positions)
             {
                 Add(dome, p, Quaternion.identity, Vector3.one, brass);
@@ -183,25 +193,6 @@ namespace Fragile.EditorTools
             {
                 float x = Mathf.Lerp(x0, x1, (i + 0.5f) / nx);
                 One(new Vector3(x, y, z0), Vector3.forward); One(new Vector3(x, y, z1), Vector3.back);
-            }
-        }
-
-        /// <summary>Spots de plafond dans la partie vide de la salle, au nord du comptoir, et à l'intérieur du comptoir.</summary>
-        static void Downlights(float zMax, float top, Material black, Material bulb)
-        {
-            var pts = new List<Vector3>();
-            float zMid = (3f + zMax) / 2f;
-            foreach (float x in new[] { -2.7f, 0f, 2.7f })
-                foreach (float dz in new[] { -1.1f, 1.1f })
-                    pts.Add(new Vector3(x, top, zMid + dz));
-            foreach (float x in new[] { -1.25f, 1.25f })
-                foreach (float z in new[] { -1.1f, 1.1f })
-                    pts.Add(new Vector3(x, top, z));
-            foreach (var p in pts)
-            {
-                Add(Prim(PrimitiveType.Cylinder), p - Vector3.up * 0.012f, Quaternion.identity, new Vector3(0.15f, 0.012f, 0.15f), black);
-                Add(Prim(PrimitiveType.Cylinder), p - Vector3.up * 0.025f, Quaternion.identity, new Vector3(0.105f, 0.002f, 0.105f), bulb);
-                Spot("Spot plafond", p - Vector3.up * 0.04f, Vector3.down, k_Warm, 13f, 80f, 20f, 6f);
             }
         }
 

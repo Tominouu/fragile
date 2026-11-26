@@ -1,0 +1,29 @@
+{
+  "objectName": "potted_plant_04",
+  "fbx": "potted_plant_04.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "potted_plant_04",
+      "baseColor": "potted_plant_04_baseColor.jpg",
+      "normal": "potted_plant_04_normal.jpg",
+      "roughness": "potted_plant_04_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/potted_plant_04 (CC0)"
+}

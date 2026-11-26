@@ -3,7 +3,7 @@
 #   Caisse_Enregistreuse  : 20 touches, tiroir-caisse (créé ici : façade, bac, billets, pièces) + ouverture sombre
 #   Tireuse_Biere         : 2 leviers
 #   Machine_Cafe          : 2 boutons
-#   Machine_Glacons       : trappe (charnière en haut) + ouverture sombre
+#   Machine_Glacons       : trappe (charnière en bas, poignée en haut) + ouverture sombre
 #   Distributeur_Boissons : 9 touches du clavier
 # Usage : blender -b <Modele>.blend --python Tools/Blender/export_interactif.py
 #         (le nom du fichier .blend choisit les règles ; le .blend n'est pas modifié)
@@ -132,7 +132,8 @@ def rules_ice():
     def extra(objs):
         shade = extra_mat("M_Ombre", (0.01, 0.01, 0.01, 1))
         box(objs.setdefault("Corps", bmesh.new()), (-0.2, -0.2756, 0.48), (0.2, -0.2755, 0.76), shade)
-    return name, {"Trappe": Vector((0.0, -0.287, 0.77))}, None, extra
+    # Charnière en bas (poignée en haut) : la trappe bascule vers l'avant.
+    return name, {"Trappe": Vector((0.0, -0.287, 0.47))}, None, extra
 
 
 def rules_vending():

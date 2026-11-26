@@ -36,6 +36,10 @@ Assets/
                                    modèles de l'équipe (BLENDER_VR/02_Bar), exportés par Tools/Blender/export_interactif.py
                                    (pièces mobiles séparées : touches, leviers, tiroir, trappe, porte), « place »: false ;
                                    + préfabs créés en jeu : Glacon.prefab, Canette_<couleur>.prefab
+    Models/Mobilier/<id>/          mobilier Poly Haven (CC0, sans attribution) : tabourets, tables, fauteuils, salon, plantes,
+                                   tonneaux, cadres, cible, horloge. Importé par Tools/Blender/import_polyhaven.py
+    Tableaux/                      photos de l'équipe dans 2 cadres (Item.artwork de BarFurnitureBuilder) : image recadrée
+                                   dans la bande U 0,16 → 0,84 d'une texture carrée 1024 (zone d'image du cadre)
     Resources/Surbrillance.mat     matériau de surbrillance (dans Resources pour que le shader soit dans le build)
     Lighting/                      luminaires (maillages, matériaux) + réglages de lightmapping
   Hands/                           mains réalistes générées (maillage + texture peau) ; Detail/ = normal map de pores (CC BY 4.0, voir CREDITS.txt)
@@ -55,7 +59,8 @@ Assets/
     Breakables/GlassPane.cs        vitre plane cassable (fissures puis éclats) ; coups transmis par le porteur du Rigidbody
     Breakables/ImpactMarks.cs      impacts de batte sur une surface (marbre du comptoir) : quads Fragile/Impact recyclés (40 max)
     Grab/HingedDoor.cs             porte à charnière saisie par la poignée, « graissée » (élan, rebond, rappel, aimant, poussée par les coups) ;
-                                   axe = Y local : pour une trappe horizontale, orienter un pivot parent (cf. machine à glaçons)
+                                   axe = Y local : pour une trappe horizontale, orienter un pivot parent (cf. machine à glaçons :
+                                   charnière en BAS, poignée en haut, elle bascule vers soi)
     Grab/PullLever.cs, SlidingDrawer.cs   levier à ressort (tireuse), tiroir coulissant (caisse)
     Grab/InteractableHighlight.cs  surbrillance au survol de la main, ajoutée automatiquement à TOUS les interactables au lancement
     Bar/                           comportements des appareils : BeerTap, CashRegister, CoffeeMachine, VendingMachine, IceBin,
@@ -84,6 +89,7 @@ Tools/Blender/fragile_unity_export.py   addon Blender « Fragile - Export vers U
 | Rendre les télés destructibles | `TvBreakable` sur chaque télé : fissures -> écran mort (éclats, étincelles) -> chute. Les télés ne sont plus « Batching Static » (sinon elles ne peuvent pas tomber) |
 | Éclairer le Bar | luminaires + lightmaps + light probes + sonde (environ 1 min de calcul). À relancer si on déplace murs, comptoir ou télés |
 | Aménager le décor du Bar | pose les appareils de `Models/Decor` (positions dans `BarDecorBuilder.Spots`), BoxCollider, statiques, émission des écrans/néons (l'addon n'exporte pas l'émission). Frigos : porte `HingedDoor` (saisie par la poignée), vitre séparée et cassable (`GlassPane`), parois en boîtes, 15 bouteilles cassables chacun. Interactions des autres appareils : `BarDecorInteractions.cs`. Seul l'enfant « Corps » est statique. Instances détachées du FBX (unpack) pour pouvoir réorganiser les pièces. Relancer « Éclairer le Bar » après |
+| Meubler le Bar | pose le mobilier de `Models/Mobilier` (disposition dans `BarFurnitureBuilder.Layout`), échelles corrigées (tabourets étirés à 74 cm, tables ×0,75), vitres des cadres en verre simple, enseigne néon « FRAGILE » (TextMeshPro + lumière baked). Au-dessus de chaque objet « Table », « Éclairer le Bar » pose la même suspension en laiton que sur le comptoir (lancer Meubler AVANT Éclairer) ; plus de spots encastrés au plafond. Tout statique. Relancer « Éclairer le Bar » après |
 | Rendre le marbre marquable | génère la texture d'impacts (`Assets/Bar/FX/Impacts`) et pose `ImpactMarks` sur le comptoir |
 | Animer la platine vinyle | branche bouton marche/arrêt, molette de volume, disque, bras, égaliseur et son sur la platine de la scène |
 
@@ -108,6 +114,10 @@ Tools/Blender/fragile_unity_export.py   addon Blender « Fragile - Export vers U
 - Physique à **72 Hz** (`TimeManager`) ; le laser de saisie (far casting) est **désactivé** : on n'attrape qu'à la main.
 - MCP Unity (CoplayDev unity-mcp v10.3.0, http://127.0.0.1:8080) : se déconnecte souvent après recompilation / redémarrage → `/mcp` > Reconnect, et dans Unity *Window > MCP for Unity* > Start.
 - Le `.blend` n'est **pas** dans le dépôt (disque E: de Tom).
+
+## Sources des modèles
+- Ajouter du mobilier : chercher sur Poly Haven (CC0), puis `blender -b --factory-startup --python Tools/Blender/import_polyhaven.py -- <id> ...`,
+  puis ajouter une ligne dans `BarFurnitureBuilder.Layout`. Surveiller les triangles (Quest) : préférer < 10 k par objet répété.
 
 ## Idées en attente
 - Main Tripo (plus détaillée) abandonnée : nécessiterait un vrai rig fait dans Blender + licence vérifiée.

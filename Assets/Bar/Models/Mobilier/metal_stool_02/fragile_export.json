@@ -1,0 +1,29 @@
+{
+  "objectName": "metal_stool_02",
+  "fbx": "metal_stool_02.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "metal_stool_02",
+      "baseColor": "metal_stool_02_baseColor.jpg",
+      "normal": "metal_stool_02_normal.jpg",
+      "roughness": "metal_stool_02_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 1.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/metal_stool_02 (CC0)"
+}

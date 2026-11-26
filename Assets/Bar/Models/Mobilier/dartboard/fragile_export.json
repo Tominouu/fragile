@@ -1,0 +1,29 @@
+{
+  "objectName": "dartboard",
+  "fbx": "dartboard.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "dartboard",
+      "baseColor": "dartboard_baseColor.jpg",
+      "normal": "dartboard_normal.jpg",
+      "roughness": "dartboard_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/dartboard (CC0)"
+}

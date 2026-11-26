@@ -1,0 +1,69 @@
+{
+  "objectName": "hanging_picture_frame_01",
+  "fbx": "hanging_picture_frame_01.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "hanging_picture_frame_01_glass",
+      "baseColor": "hanging_picture_frame_01_glass_baseColor.jpg",
+      "normal": "hanging_picture_frame_01_glass_normal.jpg",
+      "roughness": "hanging_picture_frame_01_glass_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "hanging_picture_frame_01_artwork",
+      "baseColor": "hanging_picture_frame_01_artwork_baseColor.jpg",
+      "normal": "",
+      "roughness": "hanging_picture_frame_01_artwork_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "hanging_picture_frame_01",
+      "baseColor": "hanging_picture_frame_01_baseColor.jpg",
+      "normal": "hanging_picture_frame_01_normal.jpg",
+      "roughness": "hanging_picture_frame_01_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/hanging_picture_frame_01 (CC0)"
+}

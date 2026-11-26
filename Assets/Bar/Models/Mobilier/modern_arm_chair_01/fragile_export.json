@@ -1,0 +1,49 @@
+{
+  "objectName": "modern_arm_chair_01",
+  "fbx": "modern_arm_chair_01.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "modern_arm_chair_01_legs",
+      "baseColor": "modern_arm_chair_01_legs_baseColor.jpg",
+      "normal": "modern_arm_chair_01_legs_normal.jpg",
+      "roughness": "modern_arm_chair_01_legs_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    },
+    {
+      "name": "modern_arm_chair_01_pillow",
+      "baseColor": "modern_arm_chair_01_pillow_baseColor.jpg",
+      "normal": "modern_arm_chair_01_pillow_normal.jpg",
+      "roughness": "modern_arm_chair_01_pillow_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/modern_arm_chair_01 (CC0)"
+}
