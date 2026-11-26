@@ -191,7 +191,7 @@ namespace Fragile.Mice
 
         void OnCollisionEnter(Collision c)
         {
-            if (c.rigidbody == null) return;
+            if (c.rigidbody == null || Fragile.Breakables.Debris.IsDebris(c)) return;
             float speed = c.relativeVelocity.magnitude;
             var breaker = c.rigidbody.GetComponentInParent<Breaker>();
             float power = breaker != null ? speed * breaker.power : speed * 0.5f;

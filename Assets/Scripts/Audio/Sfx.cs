@@ -170,7 +170,7 @@ namespace Fragile.Audio
             return src;
         }
 
-        static void Spatialize(AudioSource s)
+        public static void Spatialize(AudioSource s)
         {
             s.spatialBlend = 1f; s.minDistance = 0.6f; s.maxDistance = 18f; s.dopplerLevel = 0f;
             s.rolloffMode = AudioRolloffMode.Logarithmic;

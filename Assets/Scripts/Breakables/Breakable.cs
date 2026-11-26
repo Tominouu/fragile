@@ -75,23 +75,53 @@ namespace Fragile.Breakables
         float m_SpawnTime;
         static AudioClip s_SmashClip;
         static bool s_HitStopRunning;
+        BreakableSounds m_Sounds;
+        float m_LastKnock = -10f;
+        BreakableSounds Sounds => m_Sounds ??= BreakableSounds.For(name, m_Matter);
 
         void Awake()
         {
             m_SpawnTime = Time.time;
+            // Sons enregistrés choisis d'après le nom (tabouret, table, bouteille…) et la matière.
+            m_Sounds = BreakableSounds.For(name, m_Matter);
+            m_Sounds.Preload();
+            if (m_Sounds.roll != null && !TryGetComponent<Fragile.Audio.RollingSound>(out _))
+                gameObject.AddComponent<Fragile.Audio.RollingSound>().family = m_Sounds.roll;
             // Préchargement : le son et un effet sont prêts avant le premier coup.
             if (m_BreakClip == null && s_SmashClip == null) s_SmashClip = SmashSynth.Create();
             BreakFx.Prewarm(m_FxPrefab, 2);
         }
 
+        /// <summary>Choc trop faible pour abîmer : chute, renversement, coup de batte mou.</summary>
+        void Knock(Collision c, float speed, bool byBreaker)
+        {
+            if (speed < 0.9f || Time.time - m_LastKnock < 0.35f) return;
+            if (!byBreaker)
+            {
+                // Chute ou renversement : c'est cet objet qui bouge. S'il est immobile et qu'on lui lance quelque chose,
+                // c'est le projectile qui fait le bruit, pas lui.
+                if (!TryGetComponent<Rigidbody>(out var body) || body.isKinematic) return;
+                var other = c.rigidbody;
+                if (other != null && !other.isKinematic && other.linearVelocity.sqrMagnitude > body.linearVelocity.sqrMagnitude + body.angularVelocity.sqrMagnitude * 0.04f) return;
+            }
+            m_LastKnock = Time.time;
+            var point = c.contactCount > 0 ? c.GetContact(0).point : transform.position;
+            float k = Mathf.InverseLerp(0.9f, m_BreakSpeedAny, speed);
+            string family = byBreaker ? Sounds.PickHit() : Sounds.fall;
+            if (family != null && Fragile.Audio.SfxBank.Play(family, point, Mathf.Lerp(0.25f, 0.8f, k), Random.Range(0.94f, 1.06f))) return;
+            if (Sounds.glass) Fragile.Audio.Sfx.PlayAt(Fragile.Audio.Sfx.CeramicHit, point, Mathf.Lerp(0.15f, 0.45f, k), Random.Range(1.2f, 1.5f));
+        }
+
         void OnCollisionEnter(Collision c)
         {
             if (m_Broken || Time.time - m_SpawnTime < 0.5f) return;
+            // Les éclats d'un objet cassé ne cassent pas les autres (pas de réaction en chaîne).
+            if (Debris.IsDebris(c)) return;
 
             var breaker = c.rigidbody != null ? c.rigidbody.GetComponentInParent<Breaker>() : c.collider.GetComponentInParent<Breaker>();
             float speed = c.relativeVelocity.magnitude;
             bool hitByBreaker = breaker != null && speed * breaker.power >= m_BreakSpeedWithBreaker;
-            if (!hitByBreaker && speed < m_BreakSpeedAny) return;
+            if (!hitByBreaker && speed < m_BreakSpeedAny) { Knock(c, speed, breaker != null); return; }
 
             float power = breaker != null ? speed * breaker.power : speed;
             var point = c.contactCount > 0 ? c.GetContact(0).point : transform.position;
@@ -149,7 +179,8 @@ namespace Fragile.Breakables
                 fx.Play(new BreakFx.Settings { point = point, direction = normal, energy = Mathf.Lerp(0.04f, 0.2f, energy), chip1 = m_ChipColor, chip2 = m_ChipColor2, liquid = false });
             if (m_Matter == Matter.Metal) Sparks(point, normal, Mathf.RoundToInt(Mathf.Lerp(10f, 40f, energy)));
 
-            var clip = m_Matter switch
+            var clip = Fragile.Audio.SfxBank.Pick(Sounds.PickHit());
+            if (clip == null) clip = m_Matter switch
             {
                 Matter.Wood => Fragile.Audio.Sfx.WoodHit,
                 Matter.Metal => Fragile.Audio.Sfx.MetalHit,
@@ -431,6 +462,22 @@ namespace Fragile.Breakables
 
         void PlaySound(Vector3 point, float energy)
         {
+            // Coup violent : un peu plus grave et plus "gros" ; coup mou : plus aigu, plus fin.
+            float volume = Mathf.Lerp(0.45f, 1f, energy);
+            float pitch = Mathf.Lerp(1.12f, 0.92f, energy) * Random.Range(0.96f, 1.04f);
+
+            // Sons enregistrés : plusieurs couches jouées ensemble (la première est la principale).
+            bool played = false;
+            foreach (var layer in Sounds.brk)
+            {
+                var c = Fragile.Audio.SfxBank.Pick(layer.family);
+                if (c == null) continue;
+                // Les longues couches (jet de bière) ne sont pas accélérées : seul le fracas suit la violence du coup.
+                Emit(c, point, volume * layer.volume, c.length > 3f ? 1f : pitch);
+                played = true;
+            }
+            if (played) return;
+
             if (m_BreakClip == null && s_SmashClip == null) s_SmashClip = SmashSynth.Create();
             var clip = m_BreakClip != null ? m_BreakClip : m_Matter switch
             {
@@ -439,14 +486,18 @@ namespace Fragile.Breakables
                 Matter.Plastic => Fragile.Audio.Sfx.PlasticBreak,
                 _ => s_SmashClip,
             };
+            Emit(clip, point, volume, pitch);
+        }
+
+        static void Emit(AudioClip clip, Vector3 point, float volume, float pitch)
+        {
             var go = new GameObject("Son casse");
             go.transform.position = point;
             var src = go.AddComponent<AudioSource>();
             src.clip = clip;
             src.spatialBlend = 1f; src.rolloffMode = AudioRolloffMode.Logarithmic; src.minDistance = 0.6f; src.maxDistance = 25f;
-            src.volume = Mathf.Lerp(0.45f, 1f, energy);
-            // Coup violent : un peu plus grave et plus "gros" ; coup mou : plus aigu, plus fin.
-            src.pitch = Mathf.Lerp(1.12f, 0.92f, energy) * Random.Range(0.96f, 1.04f);
+            src.volume = volume;
+            src.pitch = pitch;
             src.dopplerLevel = 0f;
             src.Play();
             Destroy(go, clip.length / src.pitch + 0.2f);

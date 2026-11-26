@@ -60,6 +60,8 @@ namespace Fragile.Weapons
         [Header("Munitions")]
         [Tooltip("Magasin / chargeur inépuisable : il faut quand même armer (pompe, verrou, culasse), mais plus recharger.")]
         [SerializeField] bool m_InfiniteAmmo = true;
+        [Tooltip("Pistolet : le bouton A/X de la main qui le tient éjecte le chargeur. Désactivé : plus de plateau de chargeurs dans le Bar.")]
+        [SerializeField] bool m_MagazineEject = false;
         [Tooltip("Magasin tubulaire / magasin interne ; ignoré pour le pistolet (c'est le chargeur qui compte).")]
         [SerializeField] int m_Capacity = 6;
         [Tooltip("Cartouches dans le magasin (ou le chargeur) au départ, en plus de celle de la chambre.")]
@@ -106,6 +108,7 @@ namespace Fragile.Weapons
         int m_Loaded;
         bool m_HasMag = true, m_WasOpen, m_SlideLocked, m_Blowback;
         float m_Open, m_Lift;
+        bool m_BoltLifted;
         Vector3 m_ActionHome; Quaternion m_ActionHomeRot;
         Vector3 m_TravelRoot; float m_TravelLen;   // course du mécanisme dans le repère de l'arme
         GunHandle m_AimHandle, m_ActionHandle;
@@ -137,7 +140,9 @@ namespace Fragile.Weapons
             BuildFlash();
             BreakFx.Prewarm(m_DustFx, 3);
             // Sons fabriqués d'avance : pas d'à-coup au premier tir.
-            _ = ShotClip; _ = Sfx.BulletImpact; _ = Sfx.ShellDrop; _ = Sfx.ActionOpen; _ = Sfx.ActionClose; _ = Sfx.DryFire; _ = Sfx.LoadRound;
+            SfxBank.Preload(ShotFamily);
+            if (m_Kind == Kind.Shotgun) SfxBank.Preload(SfxBank.PompeArriere, SfxBank.PompeAvant);
+            if (m_Kind == Kind.Rifle) SfxBank.Preload(SfxBank.VerrouReleve, SfxBank.VerrouTire, SfxBank.VerrouPousse, SfxBank.VerrouRabattu); _ = ShotClip; _ = Sfx.BulletImpact; _ = Sfx.ShellDrop; _ = Sfx.ActionOpen; _ = Sfx.ActionClose; _ = Sfx.DryFire; _ = Sfx.LoadRound;
             if (m_Kind == Kind.Pistol && s_EjectLeft == null)
             {
                 s_EjectLeft = new InputAction("Éjecter chargeur G", InputActionType.Button, "<XRController>{LeftHand}/primaryButton");
@@ -178,7 +183,16 @@ namespace Fragile.Weapons
             if (TryGetComponent<Rigidbody>(out var rb)) rb.isKinematic = false;
         }
 
-        AudioClip ShotClip => m_Kind switch { Kind.Rifle => Sfx.RifleShot, Kind.Shotgun => Sfx.ShotgunShot, _ => Sfx.PistolShot };
+        string ShotFamily => m_Kind switch { Kind.Rifle => SfxBank.TirRifle, Kind.Shotgun => SfxBank.TirShotgun, _ => SfxBank.TirRevolver };
+        /// <summary>Détonation enregistrée (variante au hasard), sinon la détonation générée.</summary>
+        AudioClip ShotClip
+        {
+            get
+            {
+                var clip = SfxBank.Pick(ShotFamily);
+                return clip != null ? clip : m_Kind switch { Kind.Rifle => Sfx.RifleShot, Kind.Shotgun => Sfx.ShotgunShot, _ => Sfx.PistolShot };
+            }
+        }
 
         bool Ready => m_Chamber == Chamber.Live && m_Open < 0.05f && !m_Blowback && (m_Kind != Kind.Rifle || m_Lift < 0.05f);
 
@@ -493,9 +507,30 @@ namespace Fragile.Weapons
             {
                 SetOpen(m_Open - Time.deltaTime * 14f);   // ressort de rappel
             }
+            if (m_Kind == Kind.Rifle) BoltLeverSounds();
             ApplyAction();
 
-            if (m_Kind == Kind.Pistol && m_HasMag && grab.isSelected && EjectPressed()) EjectMagazine();
+            if (m_MagazineEject && m_Kind == Kind.Pistol && m_HasMag && grab.isSelected && EjectPressed()) EjectMagazine();
+        }
+
+        /// <summary>Volume du verrou de la carabine : l'enregistrement est bien plus fort que la détonation, on le ramène sous elle.</summary>
+        const float BoltVolume = 0.3f;
+
+        /// <summary>Carabine : levier du verrou relevé (armement) puis rabattu (verrouillage).</summary>
+        void BoltLeverSounds()
+        {
+            if (!m_BoltLifted && m_Lift >= 0.98f)
+            {
+                m_BoltLifted = true;
+                SfxBank.Play(SfxBank.VerrouReleve, transform.position, BoltVolume, Random.Range(0.97f, 1.03f));
+                if (m_ActionHandle != null) HapticsTo(m_ActionHandle.interactor, 0.25f, 0.03f);
+            }
+            else if (m_BoltLifted && m_Lift <= 0.05f)
+            {
+                m_BoltLifted = false;
+                SfxBank.Play(SfxBank.VerrouRabattu, transform.position, BoltVolume, Random.Range(0.97f, 1.03f));
+                if (m_ActionHandle != null) HapticsTo(m_ActionHandle.interactor, 0.3f, 0.03f);
+            }
         }
 
         bool EjectPressed()
@@ -524,14 +559,19 @@ namespace Fragile.Weapons
             if (m_Chamber == Chamber.Spent) Eject();
             else if (m_Chamber == Chamber.Live) EjectLive();
             m_Chamber = Chamber.Empty;
-            Sfx.PlayAt(Sfx.ActionOpen, transform.position, 0.7f, m_Kind == Kind.Pistol ? 1.3f : 1f);
+            // Fusil à pompe et carabine : sons enregistrés (pompe tirée, verrou tiré) ; le son généré reste pour le pistolet.
+            string family = m_Kind == Kind.Shotgun ? SfxBank.PompeArriere : m_Kind == Kind.Rifle ? SfxBank.VerrouTire : null;
+            if (family == null || !SfxBank.Play(family, transform.position, m_Kind == Kind.Rifle ? BoltVolume : 0.9f, Random.Range(0.97f, 1.03f)))
+                Sfx.PlayAt(Sfx.ActionOpen, transform.position, 0.7f, m_Kind == Kind.Pistol ? 1.3f : 1f);
             if (m_ActionHandle != null) HapticsTo(m_ActionHandle.interactor, 0.35f, 0.04f);
         }
 
         void Closed()
         {
             if (m_Chamber == Chamber.Empty && CanFeed) { m_Chamber = Chamber.Live; if (!m_InfiniteAmmo) m_Loaded--; }
-            Sfx.PlayAt(Sfx.ActionClose, transform.position, 0.8f, m_Kind == Kind.Pistol ? 1.3f : 1f);
+            string family = m_Kind == Kind.Shotgun ? SfxBank.PompeAvant : m_Kind == Kind.Rifle ? SfxBank.VerrouPousse : null;
+            if (family == null || !SfxBank.Play(family, transform.position, m_Kind == Kind.Rifle ? BoltVolume : 0.9f, Random.Range(0.97f, 1.03f)))
+                Sfx.PlayAt(Sfx.ActionClose, transform.position, 0.8f, m_Kind == Kind.Pistol ? 1.3f : 1f);
             if (m_ActionHandle != null) HapticsTo(m_ActionHandle.interactor, 0.45f, 0.05f);
         }
 
@@ -688,7 +728,10 @@ namespace Fragile.Weapons
             rb.linearVelocity = v + (holder != null && !holder.isKinematic ? holder.linearVelocity : Vector3.zero);
             rb.angularVelocity = Random.insideUnitSphere * 25f;
             s_Shells.Enqueue(go);
-            StartCoroutine(ShellSound(go.transform));
+            // Chute enregistrée jouée au premier contact : petite douille (pistolet), grosse (carabine), plastique (calibre 12).
+            var snd = go.GetComponent<CasingSound>();
+            snd.matter = m_Kind == Kind.Shotgun ? CasingSound.Matter.Plastic : m_Kind == Kind.Rifle ? CasingSound.Matter.RifleBrass : CasingSound.Matter.Brass;
+            snd.ResetBounces();
         }
 
         void HapticsTo(UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor interactor, float amplitude, float duration)
@@ -708,13 +751,8 @@ namespace Fragile.Weapons
             var rb = go.AddComponent<Rigidbody>();
             rb.mass = 0.02f; rb.linearDamping = 0.1f;
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            go.AddComponent<CasingSound>();
             return go;
-        }
-
-        static IEnumerator ShellSound(Transform shell)
-        {
-            yield return new WaitForSeconds(0.45f);
-            if (shell != null && shell.gameObject.activeInHierarchy) Sfx.PlayAt(Sfx.ShellDrop, shell.position, 0.5f, Random.Range(0.9f, 1.1f));
         }
     }
 }

@@ -16,6 +16,14 @@ namespace Fragile.Weapons
         public int rounds { get => m_Rounds; set => m_Rounds = value; }
         public bool consumed { get; private set; }
 
+        void Awake()
+        {
+            // Bruit quand elle tombe (éjectée, lâchée, chargeur qui glisse de l'arme).
+            if (!TryGetComponent<Rigidbody>(out _)) return;
+            if (!TryGetComponent<CasingSound>(out var snd)) snd = gameObject.AddComponent<CasingSound>();
+            snd.matter = m_Kind switch { Kind.Shell => CasingSound.Matter.Plastic, Kind.PistolMagazine => CasingSound.Matter.Magazine, _ => CasingSound.Matter.RifleBrass };
+        }
+
         /// <summary>Tenue en main : seule une munition qu'on présente soi-même entre dans l'arme
         /// (pas celle qu'on vient d'éjecter, ni un chargeur qui tombe).</summary>
         public bool held => TryGetComponent<XRBaseInteractable>(out var grab) && grab.isSelected;

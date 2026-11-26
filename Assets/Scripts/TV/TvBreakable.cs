@@ -59,6 +59,7 @@ namespace Fragile.TV
             // Préchargement : rien à fabriquer au moment du coup.
             if (s_Zap == null) s_Zap = CreateZap();
             if (s_Thud == null) s_Thud = SmashSynth.Create();
+            Fragile.Audio.SfxBank.Preload(Fragile.Audio.SfxBank.ImpactLourd, Fragile.Audio.SfxBank.VerreVinCasse, Fragile.Audio.SfxBank.ShotCasse);
             if (m_GlassClip != null) m_GlassClip.LoadAudioData();
             m_Sparks = CreateSparks();
         }
@@ -86,7 +87,7 @@ namespace Fragile.TV
                 {
                     m_LastThud = Time.time;
                     float e = Mathf.InverseLerp(1.2f, 7f, speed);
-                    PlaySound(s_Thud, point, Mathf.Lerp(0.3f, 0.9f, e), 0.55f);
+                    Thud(point, Mathf.Lerp(0.3f, 0.9f, e));
                     if (speed > 3f) Burst(point, Vector3.up, e * 0.6f);
                 }
                 return;
@@ -116,7 +117,7 @@ namespace Fragile.TV
             if (m_Fallen)
             {
                 m_Body.AddForceAtPosition(direction * Mathf.Lerp(3f, 14f, energy), point, ForceMode.Impulse);
-                PlaySound(s_Thud, point, 0.5f, 0.7f);
+                Thud(point, 0.5f);
                 return;
             }
 
@@ -176,7 +177,9 @@ namespace Fragile.TV
 
             SpawnShards(p, energy);
             Burst(onScreen, transform.forward, Mathf.Lerp(0.4f, 1f, energy));
-            PlaySound(m_GlassClip, onScreen, 1f, Random.Range(0.8f, 0.9f));
+            // Écran brisé : même fracas de verre que les bouteilles.
+            if (!BreakableSounds.PlayGlassBreak(onScreen, 1f, Random.Range(0.95f, 1.05f)))
+                PlaySound(m_GlassClip, onScreen, 1f, Random.Range(0.8f, 0.9f));
             PlaySound(s_Zap, onScreen, 0.9f, 1f);
             StartCoroutine(Sparkle(onScreen));
         }
@@ -209,7 +212,7 @@ namespace Fragile.TV
             m_Body.angularVelocity = transform.right * Random.Range(1f, 2.2f) + transform.forward * Random.Range(-1f, 1f);
             m_Sparks.Emit(40);
             PlaySound(s_Zap, point, 0.8f, 0.8f);
-            PlaySound(s_Thud, point, 0.6f, 0.6f);
+            Thud(point, 0.6f);
         }
 
         // ------------------------------------------------------------------ fissures et éclats
@@ -389,6 +392,13 @@ namespace Fragile.TV
             r.shadowCastingMode = ShadowCastingMode.Off;
             go.SetActive(true);
             return ps;
+        }
+
+        /// <summary>Choc du boîtier (coup, chute, sol) : impact lourd enregistré, sinon le son généré.</summary>
+        static void Thud(Vector3 point, float volume)
+        {
+            if (!Fragile.Audio.SfxBank.Play(Fragile.Audio.SfxBank.ImpactLourd, point, volume, Random.Range(0.85f, 1f)))
+                PlaySound(s_Thud, point, volume, 0.6f);
         }
 
         static void PlaySound(AudioClip clip, Vector3 point, float volume, float pitch)

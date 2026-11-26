@@ -48,7 +48,7 @@ Assets/
                                    FRAGILE_SUB=Bar/Armes/Modeles ; Read/Write activé : la prise mesure leurs sommets),
                                    Fusil_Pompe + Cartouche_12 (modélisés par Tools/Blender/build_shotgun.py, type 870, pompe séparée ;
                                    bois = Tools/Blender/textures/noyer_crosse_*, dérivé de smoked_walnut_veneer CC0) ;
-                                   FX/ : textures générées (impact de balle, flamme, traçante), matériaux des boîtes
+                                   FX/ : textures générées (impact de balle, flamme, traçante)
     Resources/Surbrillance.mat     matériau de surbrillance (dans Resources pour que le shader soit dans le build)
     Lighting/                      luminaires (maillages, matériaux) + réglages de lightmapping
   Hands/                           mains réalistes générées (maillage + texture peau) ; Detail/ = normal map de pores (CC BY 4.0, voir CREDITS.txt)
@@ -62,7 +62,10 @@ Assets/
     Breakables/Breakable.cs        casse (3 niveaux d'éclats selon la force), relâche les mains avant de se désactiver
     Breakables/Breaker.cs          ce qui casse (la batte) + vibrations
     Breakables/BreakFx.cs          effet de casse en pool (éclats 3D, poussière, liquide)
-    Breakables/Debris.cs           morceaux : gros = restent au sol sans physique ni collider ; miettes = disparaissent ; plafond 140
+    Breakables/Debris.cs           morceaux : gros = restent au sol sans physique ni collider ; miettes = disparaissent ; plafond 140.
+                                   Ne se fige que posé sur une vraie surface (pas sur un autre débris) ; si ce support disparaît ou bouge
+                                   (table cassée, miette effacée, objet ramassé), le morceau retrouve sa physique et retombe (Debris.Watcher).
+                                   Un débris ne casse rien et ne tue pas les souris (Debris.IsDebris(collision), testé dans Breakable/Mouse)
     Breakables/LiquidFill.cs       niveau + ondulation du liquide (ExecuteAlways)
     Breakables/SmashSynth.cs       son de casse généré par code
     Breakables/GlassPane.cs        vitre plane cassable (fissures puis éclats) ; coups transmis par le porteur du Rigidbody
@@ -83,7 +86,7 @@ Assets/
                                    seulement armer (pompe, verrou ; le pistolet se réarme seul) ; décocher pour le rechargement réel.
                                    Fusil : pompe arrière = éjection, avant = chambrage ; carabine : levier relevé, verrou tiré/poussé,
                                    levier rabattu ; pistolet : culasse automatique, bloquée ouverte à vide, chargeur éjecté au bouton
-                                   A/X de la main qui le tient. m_StartRacked : cinématique sur son râtelier jusqu'au premier lâcher
+                                   A/X de la main qui le tient (désactivé : m_MagazineEject = faux, plus de plateau de chargeurs). m_StartRacked : cinématique sur son râtelier jusqu'au premier lâcher
     Weapons/GunHandle.cs           2e prise (autre main) : Support (garde-main), Pump, Slide, Bolt ; saisissable seulement si l'arme
                                    est tenue ; la main suit la pièce, la vraie manette la pilote (déplacement projeté sur la course)
     Weapons/TwoHandAim.cs          transformateur de prise XRI (après XRGeneralGrabTransformer) : l'arme pivote autour de la poignée
@@ -95,7 +98,7 @@ Assets/
                                    désormais la pièce déplacée (InteractableHighlight -> highlightRoot)
     Weapons/AmmoItem, LoadZone, AmmoBox   munition attrapable ; zone de chargement (trigger : trappe, fenêtre, puits du chargeur ;
                                    n'accepte qu'une munition TENUE en main, sinon la cartouche éjectée se rechargerait seule) ;
-                                   boîte inépuisable (la saisir met une munition dans la main)
+                                   boîte inépuisable (la saisir met une munition dans la main) — plus posée dans le Bar (nov. 2026 : munitions infinies, boîtes retirées)
     Mice/Mouse.cs                  souris (6, modèle Poly Haven street_rat CC0 allégé à ~3 500 triangles) : trottinent le long des murs,
                                    contournent les meubles (SphereCast), restent au sol, fuient le joueur et le bruit (Mouse.ScareAll
                                    appelé par Firearm et Breakable) vers un trou. Meurent : batte (vers le bas = écrasée), objet lancé,
@@ -128,7 +131,7 @@ Tools/Blender/fragile_unity_export.py   addon Blender « Fragile - Export vers U
 | Aménager le décor du Bar | pose les appareils de `Models/Decor` (positions dans `BarDecorBuilder.Spots`), BoxCollider, statiques, émission des écrans/néons (l'addon n'exporte pas l'émission). Frigos : porte `HingedDoor` (saisie par la poignée), vitre séparée et cassable (`GlassPane`), parois en boîtes, 15 bouteilles cassables chacun. Interactions des autres appareils : `BarDecorInteractions.cs`. Seul l'enfant « Corps » est statique. Instances détachées du FBX (unpack) pour pouvoir réorganiser les pièces. Relancer « Éclairer le Bar » après |
 | Meubler le Bar | pose le mobilier de `Models/Mobilier` (disposition dans `BarFurnitureBuilder.Layout`), échelles corrigées (tabourets étirés à 74 cm, tables ×0,75), vitres des cadres en verre simple, enseigne néon « FRAGILE » (TextMeshPro + lumière baked). Au-dessus de chaque objet « Table », « Éclairer le Bar » pose la même suspension en laiton que sur le comptoir (lancer Meubler AVANT Éclairer) ; plus de spots encastrés au plafond. Tout statique. Relancer « Éclairer le Bar » après. Appelle aussi `BarRoomFinish` (habillage : lambris 1 m sur tous les murs, parement de briques au nord, poutres au plafond, porte de sortie + panneau SORTIE au mur ouest z = −1,66, tapis). Les étagères à bouteilles du mur sud ont des colliders par planche (pas de boîte englobante : elle éjecterait les bouteilles) et sont garnies avec les préfabs de bouteilles (pas de flasque, pas dans les bacs du bas). Les objets muraux sont décollés de 1,6 cm (épaisseur des briques) et orientés selon la normale du mur, pas l'avant du modèle |
 | (casse du décor) | Aménager/Meubler rendent TOUT cassable via `DecorBreakables.Make(go, clé, matière, coups)` : pièces fusionnées puis découpées EN PIÈCES (îlots de maillage : pieds, assise, panneaux, touches, douelles ; grosses pièces fendues en 2-4, métal cabossé) — céramique seule en éclats de Voronoï, éclats dans `Assets/Bar/Casse` partagés par modèle. Plusieurs coups selon l'objet (`m_Hits` de Breakable : bouteille 1, chaise 6, frigo 8, distributeur 10…) : dès le 1er coup l'objet est remplacé par ses pièces en place qui se disjoignent à chaque coup (fissures visibles, `Breakable.Crack`), + marque (Degats_<matière>), fait trembler l'objet et sonne selon la matière. Rigidbody cinématique, pas de Batching Static (tremblement) mais lightmappé. Plantes de table libres, bouteilles des frigos hors de leur hiérarchie. Limite : l'ombre précalculée d'un objet cassé reste |
-| Placer les armes | fabrique les 3 préfabs d'armes et leurs munitions (racine = centre de la poignée ; Visuals > Recul > Modèle ; poignée invisible mesurée par GripSurface ; colliders en tranches ; poignées secondaires GunHandle ; zone de chargement ; liste de colliders de l'arme SANS ceux des poignées, réglée via SerializedObject « m_Colliders » — l'API `colliders` n'était pas enregistrée dans le préfab) et les pose : fusil à pompe sur râtelier sous l'enseigne FRAGILE + boîte de cartouches sur une tablette, carabine sur râtelier au mur sud + boîte sur la caisse, pistolet sur le comptoir près de la caisse + plateau de chargeurs. Réglages de chaque arme dans `WeaponBuilder` (Spec : poignée, bouche, dégâts, recul…). Râteliers non GI-statiques : pas besoin de relancer l'éclairage |
+| Placer les armes | fabrique les 3 préfabs d'armes et leurs munitions (racine = centre de la poignée ; Visuals > Recul > Modèle ; poignée invisible mesurée par GripSurface ; colliders en tranches ; poignées secondaires GunHandle ; zone de chargement ; liste de colliders de l'arme SANS ceux des poignées, réglée via SerializedObject « m_Colliders » — l'API `colliders` n'était pas enregistrée dans le préfab) et les pose : fusil à pompe sur râtelier sous l'enseigne FRAGILE, carabine sur râtelier au mur sud, pistolet sur le comptoir près de la caisse (plus de boîtes de munitions ni de plateau de chargeurs : munitions infinies). Réglages de chaque arme dans `WeaponBuilder` (Spec : poignée, bouche, dégâts, recul…). Râteliers non GI-statiques : pas besoin de relancer l'éclairage |
 | Ajouter les souris | préfab de souris, 4 trous dans les plinthes, nid (objet « Souris »), matériaux et textures du sang (Assets/Bar/Souris/FX, générées). Pas besoin de relancer l'éclairage |
 | Rendre le marbre marquable | génère la texture d'impacts (`Assets/Bar/FX/Impacts`) et pose `ImpactMarks` sur le comptoir |
 | Animer la platine vinyle | branche bouton marche/arrêt, molette de volume, disque, bras, égaliseur et son sur la platine de la scène |

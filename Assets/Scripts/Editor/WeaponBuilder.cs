@@ -3,7 +3,6 @@ using Fragile.Bar;
 using Fragile.Breakables;
 using Fragile.Grab;
 using Fragile.Weapons;
-using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -138,25 +137,19 @@ namespace Fragile.EditorTools
             if (old != null) Undo.DestroyObjectImmediate(old);
             var root = new GameObject("Armes").transform;
 
-            // Fusil à pompe : râtelier sous l'enseigne néon (mur de briques nord, canon vers l'est), cartouches sur une tablette dessous.
+            // Pas de boîtes de munitions : les armes ont des munitions infinies (Firearm.m_InfiniteAmmo).
+            // Fusil à pompe : râtelier sous l'enseigne néon (mur de briques nord, canon vers l'est).
             Rack(root, shotgun, "Râtelier fusil", new Vector3(-1.45f, 1.5f, 8.348f), Vector3.back, Vector3.right, new[] { -0.32f, 0.27f });
-            var shelf = WallShelf(root, "Tablette cartouches", new Vector3(-1.45f, 1.16f, 8.348f), Vector3.back, 0.42f, 0.17f);
-            Box(root, "Boîte de cartouches (calibre 12)", ammo.shell, shelf + Vector3.up * 0.001f, Quaternion.Euler(0f, 8f, 0f),
-                new Vector3(0.16f, 0.07f, 0.1f), new Color(0.62f, 0.1f, 0.07f), "CAL. 12", 5);
-            // Carabine : mur sud, au-dessus des caisses (canon vers l'ouest), cartouches sur la caisse du dessus.
+            // Carabine : mur sud, au-dessus des caisses (canon vers l'ouest).
             Rack(root, rifle, "Râtelier carabine", new Vector3(2.45f, 1.45f, -5f), Vector3.forward, Vector3.left, new[] { -0.32f, 0.2f });
-            Box(root, "Boîte de cartouches (7,62)", ammo.round, OnSurface(new Vector3(2.4f, 0f, -4.72f)), Quaternion.Euler(0f, 168f, 0f),
-                new Vector3(0.12f, 0.05f, 0.08f), new Color(0.75f, 0.62f, 0.36f), "7,62 × 54", 4);
-            // Pistolet : sur le comptoir, à côté de la caisse ; plateau de chargeurs juste derrière.
+            // Pistolet : sur le comptoir, à côté de la caisse.
             OnCounter(root, pistol, new Vector3(2.5f, 0f, -0.42f), Vector3.back);
-            Box(root, "Plateau de chargeurs", ammo.mag, OnSurface(new Vector3(2.52f, 0f, -0.72f)), Quaternion.Euler(0f, 90f, 0f),
-                new Vector3(0.2f, 0.035f, 0.12f), new Color(0.12f, 0.1f, 0.09f), "", 3);
 
             Undo.RegisterCreatedObjectUndo(root.gameObject, "Placer les armes");
             var scene = EditorSceneManager.GetActiveScene();
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
-            Debug.Log("[Fragile] Armes placées : fusil à pompe (sous l'enseigne), carabine (mur sud), pistolet (comptoir), et leurs munitions.");
+            Debug.Log("[Fragile] Armes placées : fusil à pompe (sous l'enseigne), carabine (mur sud), pistolet (comptoir).");
         }
 
         // ------------------------------------------------------------------ munitions
@@ -456,108 +449,6 @@ namespace Fragile.EditorTools
                 c.center = new Vector3(bb.center.x, bb.center.y, (a + b) / 2f);
                 c.size = new Vector3(Mathf.Max(bb.size.x, 0.01f), Mathf.Max(bb.size.y, 0.01f), b - a);
             }
-        }
-
-        // ------------------------------------------------------------------ boîtes de munitions
-
-        /// <summary>Hauteur de la surface sous un point (comptoir, caisse...).</summary>
-        static Vector3 OnSurface(Vector3 p)
-        {
-            Physics.SyncTransforms();
-            float top = 0f;
-            foreach (var h in Physics.RaycastAll(new Vector3(p.x, 2.5f, p.z), Vector3.down, 3f, ~0, QueryTriggerInteraction.Ignore))
-            {
-                if (h.normal.y < 0.7f || h.collider.GetComponentInParent<Firearm>() != null || h.collider.GetComponentInParent<AmmoBox>() != null) continue;
-                top = Mathf.Max(top, h.point.y);
-            }
-            return new Vector3(p.x, top, p.z);
-        }
-
-        /// <summary>Petite tablette murale (planche + deux équerres) ; renvoie le point du dessus, au milieu.</summary>
-        static Vector3 WallShelf(Transform root, string name, Vector3 wallPoint, Vector3 inward, float length, float depth)
-        {
-            var shelf = new GameObject(name).transform; shelf.SetParent(root, false);
-            var wood = AssetDatabase.LoadAssetAtPath<Material>("Assets/Bar/Lighting/Corniche_Bois.mat");
-            var brass = AssetDatabase.LoadAssetAtPath<Material>("Assets/Bar/Lighting/Laiton.mat");
-            var rot = Quaternion.LookRotation(inward);
-            var along = Vector3.Cross(Vector3.up, inward).normalized;
-            var plank = Prim(shelf, "Planche", PrimitiveType.Cube, wallPoint + inward * (depth / 2f), rot, new Vector3(length, 0.022f, depth), wood);
-            foreach (var s in new[] { -1f, 1f })
-                Prim(shelf, "Équerre", PrimitiveType.Cube, wallPoint + along * (s * length * 0.35f) + inward * (depth * 0.35f) - Vector3.up * 0.04f,
-                    rot * Quaternion.Euler(45f, 0f, 0f), new Vector3(0.012f, 0.012f, depth * 0.75f), brass);
-            return wallPoint + inward * (depth / 2f) + Vector3.up * 0.011f;
-        }
-
-        /// <summary>Boîte de munitions inépuisable (carton + étiquette + quelques munitions visibles sur le dessus).</summary>
-        static void Box(Transform root, string name, AmmoItem ammo, Vector3 bottom, Quaternion rot, Vector3 size, Color color, string label, int shown)
-        {
-            var box = new GameObject(name);
-            box.transform.SetParent(root, false);
-            box.transform.SetPositionAndRotation(bottom, rot);
-            var mat = BoxMaterial(name, color);
-            var body = Prim(box.transform, "Carton", PrimitiveType.Cube, Vector3.zero, Quaternion.identity, Vector3.one, mat);
-            body.transform.localPosition = Vector3.up * size.y / 2f; body.transform.localScale = size;
-            Object.DestroyImmediate(body.GetComponent<Collider>());
-            GameObjectUtility.SetStaticEditorFlags(body, 0);   // la boîte peut tomber (étagère ou caisse cassée)
-            var col = box.AddComponent<BoxCollider>(); col.center = Vector3.up * size.y / 2f; col.size = size;
-            if (!string.IsNullOrEmpty(label))
-            {
-                var text = new GameObject("Étiquette"); text.transform.SetParent(box.transform, false);
-                text.transform.localPosition = new Vector3(0f, size.y / 2f, -size.z / 2f - 0.001f);
-                var tmp = text.AddComponent<TextMeshPro>();
-                tmp.text = label; tmp.rectTransform.sizeDelta = new Vector2(size.x * 0.9f, size.y * 0.7f);
-                tmp.enableAutoSizing = true; tmp.fontSizeMin = 0.01f; tmp.fontSizeMax = 1f;
-                tmp.alignment = TextAlignmentOptions.Center; tmp.fontStyle = FontStyles.Bold; tmp.color = new Color(0.95f, 0.9f, 0.75f);
-            }
-            // Munitions posées sur le dessus (décor : la boîte en donne autant qu'on veut).
-            var mf = ammo.GetComponentInChildren<MeshFilter>(); var mr = mf.GetComponent<MeshRenderer>();
-            for (int i = 0; i < shown; i++)
-            {
-                var v = new GameObject("Munition");
-                v.transform.SetParent(box.transform, false);
-                v.AddComponent<MeshFilter>().sharedMesh = mf.sharedMesh;
-                var r = v.AddComponent<MeshRenderer>(); r.sharedMaterials = mr.sharedMaterials; r.receiveGI = ReceiveGI.LightProbes;
-                float u = shown > 1 ? i / (float)(shown - 1) - 0.5f : 0f;
-                var b = mf.sharedMesh.bounds;
-                // Couchée sur le carton : grand axe en travers, posée sur sa face la plus large.
-                var longAxis = LongAxis(b.size);
-                var thin = ThinAxis(b.size);
-                var rotL = Quaternion.LookRotation(Vector3.up, Vector3.right);   // repère : avant = haut, haut = travers
-                var lie = Quaternion.Inverse(Quaternion.LookRotation(thin, longAxis)) ;
-                v.transform.localRotation = rotL * lie;
-                // Rangées en travers (petites munitions) ou côte à côte (chargeurs).
-                var offset = b.size[Index(longAxis)] > size.x * 0.4f ? new Vector3(0f, 0f, u * size.z * 0.7f) : new Vector3(u * size.x * 0.75f, 0f, 0f);
-                float minY = float.MaxValue;
-                for (int k = 0; k < 8; k++)
-                {
-                    var c = b.center + Vector3.Scale(b.extents, new Vector3((k & 1) == 0 ? -1 : 1, (k & 2) == 0 ? -1 : 1, (k & 4) == 0 ? -1 : 1));
-                    minY = Mathf.Min(minY, (v.transform.localRotation * c).y);
-                }
-                var centered = -(v.transform.localRotation * b.center);
-                v.transform.localPosition = new Vector3(centered.x, size.y - minY, centered.z) + offset;
-            }
-            var rb = box.AddComponent<Rigidbody>(); rb.mass = 0.5f;
-            var ab = box.AddComponent<AmmoBox>();
-            var so = new SerializedObject(ab);
-            so.FindProperty("m_Prefab").objectReferenceValue = ammo;
-            so.ApplyModifiedPropertiesWithoutUndo();
-            var aso = new SerializedObject(ab);
-            SetColliders(aso, new List<Collider> { col });
-            aso.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        static Vector3 LongAxis(Vector3 s) => s.x >= s.y && s.x >= s.z ? Vector3.right : s.y >= s.z ? Vector3.up : Vector3.forward;
-        static Vector3 ThinAxis(Vector3 s) => s.x <= s.y && s.x <= s.z ? Vector3.right : s.y <= s.z ? Vector3.up : Vector3.forward;
-        static int Index(Vector3 axis) => axis.x != 0f ? 0 : axis.y != 0f ? 1 : 2;
-
-        static Material BoxMaterial(string name, Color c)
-        {
-            string path = $"{FxDir}/Boite_{c.r:0.00}_{c.g:0.00}_{c.b:0.00}.mat".Replace(',', '.');
-            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (m == null) { m = new Material(Shader.Find("Universal Render Pipeline/Lit")); AssetDatabase.CreateAsset(m, path); }
-            m.SetColor("_BaseColor", c); m.SetFloat("_Smoothness", 0.2f);
-            EditorUtility.SetDirty(m);
-            return m;
         }
 
         // ------------------------------------------------------------------ pose dans le décor

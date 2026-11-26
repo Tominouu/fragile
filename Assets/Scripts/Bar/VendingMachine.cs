@@ -45,7 +45,7 @@ namespace Fragile.Bar
                 rb.linearVelocity = transform.forward * 0.35f + Vector3.down * 0.2f;
                 rb.angularVelocity = transform.right * Random.Range(-2f, 2f);
             }
-            Sfx.PlayAt(Sfx.Clunk, pos, 0.9f);
+            if (!SfxBank.Play(SfxBank.ObjetTombe, pos, 0.8f, Random.Range(0.95f, 1.05f))) Sfx.PlayAt(Sfx.Clunk, pos, 0.9f);
             Track(m_Spawned, can, m_Max);
             yield return new WaitForSeconds(0.3f);
             m_Busy = false;

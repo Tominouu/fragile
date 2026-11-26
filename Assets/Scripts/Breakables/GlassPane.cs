@@ -70,7 +70,10 @@ namespace Fragile.Breakables
 
             if (m_Damage >= m_Health) { Shatter(p, onPane, direction, energy); return; }
             AddCracks(p, energy);
-            PlaySound(m_GlassClip, onPane, Mathf.Lerp(0.25f, 0.5f, energy), 1.45f);
+            // Fissure : son enregistré de verre qui se fend, sinon le son de verre aigu d'origine.
+            var crack = Fragile.Audio.SfxBank.Pick(Fragile.Audio.SfxBank.MiroirFissure);
+            if (crack != null) PlaySound(crack, onPane, Mathf.Lerp(0.35f, 0.65f, energy), Random.Range(0.97f, 1.08f));
+            else PlaySound(m_GlassClip, onPane, Mathf.Lerp(0.25f, 0.5f, energy), 1.45f);
             Burst(onPane, direction, 0.1f);
         }
 
