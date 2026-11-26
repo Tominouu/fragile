@@ -338,6 +338,7 @@ namespace Fragile.Breakables
             m_Marks.Clear();
             if (m_Sparks != null) Destroy(m_Sparks.gameObject, 1f);
 
+            Fragile.Mice.Mouse.ScareAll(point, 3f);   // fracas : les souris voisines détalent
             ReleaseHands();
             gameObject.SetActive(false);
             Destroy(gameObject, 0.1f);

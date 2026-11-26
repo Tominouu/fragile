@@ -96,6 +96,13 @@ Assets/
     Weapons/AmmoItem, LoadZone, AmmoBox   munition attrapable ; zone de chargement (trigger : trappe, fenêtre, puits du chargeur ;
                                    n'accepte qu'une munition TENUE en main, sinon la cartouche éjectée se rechargerait seule) ;
                                    boîte inépuisable (la saisir met une munition dans la main)
+    Mice/Mouse.cs                  souris (6, modèle Poly Haven street_rat CC0 allégé à ~3 500 triangles) : trottinent le long des murs,
+                                   contournent les meubles (SphereCast), restent au sol, fuient le joueur et le bruit (Mouse.ScareAll
+                                   appelé par Firearm et Breakable) vers un trou. Meurent : batte (vers le bas = écrasée), objet lancé,
+                                   balle (IHittable : poussée -> vol plané). Animation procédurale (pas de squelette).
+                                   Collision.relativeVelocity = vitesse de l'AUTRE objet par rapport à celui qui reçoit l'événement
+    Mice/MouseNest, BloodFx, BloodDecal   population + trous des plinthes ; sang : gerbe, giclée sur la surface derrière, flaque qui
+                                   s'étale (recyclées, 40 max, effacées après 2 min)
     Music/Turntable, PanelButton, PanelKnob, FingerTips   platine vinyle ; bouton poussé au doigt, molette tournée au poignet (réutilisables)
     XR/SimulatorIfNoHeadset.cs     simulateur XR seulement si aucun casque (attend jusqu'à 4 s le démarrage OpenXR)
     Editor/                        outils (menus ci-dessous)
@@ -122,6 +129,7 @@ Tools/Blender/fragile_unity_export.py   addon Blender « Fragile - Export vers U
 | Meubler le Bar | pose le mobilier de `Models/Mobilier` (disposition dans `BarFurnitureBuilder.Layout`), échelles corrigées (tabourets étirés à 74 cm, tables ×0,75), vitres des cadres en verre simple, enseigne néon « FRAGILE » (TextMeshPro + lumière baked). Au-dessus de chaque objet « Table », « Éclairer le Bar » pose la même suspension en laiton que sur le comptoir (lancer Meubler AVANT Éclairer) ; plus de spots encastrés au plafond. Tout statique. Relancer « Éclairer le Bar » après. Appelle aussi `BarRoomFinish` (habillage : lambris 1 m sur tous les murs, parement de briques au nord, poutres au plafond, porte de sortie + panneau SORTIE au mur ouest z = −1,66, tapis). Les étagères à bouteilles du mur sud ont des colliders par planche (pas de boîte englobante : elle éjecterait les bouteilles) et sont garnies avec les préfabs de bouteilles (pas de flasque, pas dans les bacs du bas). Les objets muraux sont décollés de 1,6 cm (épaisseur des briques) et orientés selon la normale du mur, pas l'avant du modèle |
 | (casse du décor) | Aménager/Meubler rendent TOUT cassable via `DecorBreakables.Make(go, clé, matière, coups)` : pièces fusionnées puis découpées EN PIÈCES (îlots de maillage : pieds, assise, panneaux, touches, douelles ; grosses pièces fendues en 2-4, métal cabossé) — céramique seule en éclats de Voronoï, éclats dans `Assets/Bar/Casse` partagés par modèle. Plusieurs coups selon l'objet (`m_Hits` de Breakable : bouteille 1, chaise 6, frigo 8, distributeur 10…) : dès le 1er coup l'objet est remplacé par ses pièces en place qui se disjoignent à chaque coup (fissures visibles, `Breakable.Crack`), + marque (Degats_<matière>), fait trembler l'objet et sonne selon la matière. Rigidbody cinématique, pas de Batching Static (tremblement) mais lightmappé. Plantes de table libres, bouteilles des frigos hors de leur hiérarchie. Limite : l'ombre précalculée d'un objet cassé reste |
 | Placer les armes | fabrique les 3 préfabs d'armes et leurs munitions (racine = centre de la poignée ; Visuals > Recul > Modèle ; poignée invisible mesurée par GripSurface ; colliders en tranches ; poignées secondaires GunHandle ; zone de chargement ; liste de colliders de l'arme SANS ceux des poignées, réglée via SerializedObject « m_Colliders » — l'API `colliders` n'était pas enregistrée dans le préfab) et les pose : fusil à pompe sur râtelier sous l'enseigne FRAGILE + boîte de cartouches sur une tablette, carabine sur râtelier au mur sud + boîte sur la caisse, pistolet sur le comptoir près de la caisse + plateau de chargeurs. Réglages de chaque arme dans `WeaponBuilder` (Spec : poignée, bouche, dégâts, recul…). Râteliers non GI-statiques : pas besoin de relancer l'éclairage |
+| Ajouter les souris | préfab de souris, 4 trous dans les plinthes, nid (objet « Souris »), matériaux et textures du sang (Assets/Bar/Souris/FX, générées). Pas besoin de relancer l'éclairage |
 | Rendre le marbre marquable | génère la texture d'impacts (`Assets/Bar/FX/Impacts`) et pose `ImpactMarks` sur le comptoir |
 | Animer la platine vinyle | branche bouton marche/arrêt, molette de volume, disque, bras, égaliseur et son sur la platine de la scène |
 
@@ -145,6 +153,10 @@ Tools/Blender/fragile_unity_export.py   addon Blender « Fragile - Export vers U
 - **Prise orientée (armes)** : `GripSurface.m_FixedAim` -> `ControllerHandPose.BeginAimedGrab` : la poignée s'aligne sur la ligne
   des jointures (auriculaire -> index) et le canon sur la direction du poing (paume -> base du majeur). NE PAS viser selon l'avant
   de la manette : sur Quest il suit le manche (canon parti dans l'axe de la poignée). L'axe de prise passe par l'origine de l'objet.
+- **`Mathf.SmoothStep(a, b, t)` n'est PAS le smoothstep des shaders** (il interpole entre a et b) : pour un seuil doux dans une
+  texture générée, utiliser une fonction Step maison (cf. MouseBuilder / WeaponBuilder). Bug vu : alpha faux, taches carrées.
+- **Matériau URP Lit transparent avec reflets** : mettre `_BlendModePreserveSpecular` à 0 (sinon mode prémultiplié : le reflet
+  reste visible là où l'alpha est nul, on voit tout le carré du quad).
 - Le liquide est rendu en file 2500 (avant le verre transparent) pour être vu à travers la réfraction.
 - Physique à **72 Hz** (`TimeManager`) ; le laser de saisie (far casting) est **désactivé** : on n'attrape qu'à la main.
 - MCP Unity (CoplayDev unity-mcp v10.3.0, http://127.0.0.1:8080) : se déconnecte souvent après recompilation / redémarrage → `/mcp` > Reconnect, et dans Unity *Window > MCP for Unity* > Start.

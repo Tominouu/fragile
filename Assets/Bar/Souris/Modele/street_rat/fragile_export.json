@@ -1,0 +1,29 @@
+{
+  "objectName": "street_rat",
+  "fbx": "street_rat.fbx",
+  "collider": false,
+  "materials": [
+    {
+      "name": "street_rat",
+      "baseColor": "street_rat_baseColor.jpg",
+      "normal": "street_rat_normal.jpg",
+      "roughness": "street_rat_roughness.jpg",
+      "metallicMap": "",
+      "tiling": [
+        1.0,
+        1.0
+      ],
+      "color": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "transparent": false
+    }
+  ],
+  "place": false,
+  "source": "https://polyhaven.com/a/street_rat (CC0)"
+}

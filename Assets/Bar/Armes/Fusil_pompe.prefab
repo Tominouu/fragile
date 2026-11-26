@@ -770,6 +770,7 @@ MonoBehaviour:
   m_KickReturn: 14
   m_Haptic: 1
   m_KickRoot: {fileID: 5137602856980545811}
+  m_InfiniteAmmo: 1
   m_Capacity: 6
   m_StartLoaded: 5
   m_AmmoPrefab: {fileID: 2282687240322755519, guid: 3c860697bf813d44daddc3181bccad18, type: 3}

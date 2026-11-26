@@ -720,14 +720,17 @@ namespace Fragile.EditorTools
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
 
+        // Smoothstep des shaders (Mathf.SmoothStep, lui, interpole entre ses deux premiers arguments).
+        static float Step(float e0, float e1, float x) { float t = Mathf.Clamp01((x - e0) / (e1 - e0)); return t * t * (3f - 2f * t); }
+
         static Color HolePixel(float u, float v, System.Random rng)
         {
             // Trou noir, collerette éclatée (plâtre/bois arraché), fines fissures rayonnantes.
             float dx = u - 0.5f, dy = v - 0.5f, r = Mathf.Sqrt(dx * dx + dy * dy) * 2f, a = Mathf.Atan2(dy, dx);
             float jag = 0.08f * Mathf.Sin(a * 7f) + 0.05f * Mathf.Sin(a * 13f + 1f);
-            float hole = 1f - Mathf.SmoothStep(0.16f + jag * 0.5f, 0.24f + jag * 0.5f, r);
-            float ring = (1f - Mathf.SmoothStep(0.35f + jag, 0.75f + jag, r)) * (0.55f + 0.3f * (float)rng.NextDouble());
-            float crack = Mathf.Pow(Mathf.Abs(Mathf.Cos(a * 5f + Mathf.Sin(a * 3f))), 60f) * (1f - Mathf.SmoothStep(0.4f, 0.95f, r));
+            float hole = 1f - Step(0.16f + jag * 0.5f, 0.24f + jag * 0.5f, r);
+            float ring = (1f - Step(0.35f + jag, 0.75f + jag, r)) * (0.55f + 0.3f * (float)rng.NextDouble());
+            float crack = Mathf.Pow(Mathf.Abs(Mathf.Cos(a * 5f + Mathf.Sin(a * 3f))), 60f) * (1f - Step(0.4f, 0.95f, r));
             float alpha = Mathf.Clamp01(Mathf.Max(hole, Mathf.Max(ring * 0.75f, crack * 0.8f)));
             var c = Color.Lerp(new Color(0.32f, 0.29f, 0.26f), new Color(0.02f, 0.02f, 0.02f), Mathf.Max(hole, crack * 0.6f));
             c.a = alpha;

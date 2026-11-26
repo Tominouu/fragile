@@ -40,6 +40,47 @@ namespace Fragile.Audio
         public static AudioClip PumpRack => s_PumpRack != null ? s_PumpRack : s_PumpRack = Make("Pompe armée", 0.42f, Clacks(new[] { 0f, 0.2f }, 1700f, 1f));
         public static AudioClip BoltCycle => s_BoltCycle != null ? s_BoltCycle : s_BoltCycle = Make("Culasse", 0.75f, Clacks(new[] { 0f, 0.14f, 0.42f, 0.58f }, 2300f, 0.8f));
         public static AudioClip SlideClack => s_SlideClack != null ? s_SlideClack : s_SlideClack = Make("Culasse pistolet", 0.12f, Clacks(new[] { 0f, 0.045f }, 3100f, 0.5f));
+        // Souris : couinements, cri de mort, « splotch » mouillé.
+        static AudioClip s_Squeak, s_MouseDeath, s_Splat;
+        public static AudioClip Squeak => s_Squeak != null ? s_Squeak : s_Squeak = Make("Couinement", 0.32f, Chirps(new[] { 0f, 0.09f, 0.2f }, 0.06f, 5200f, 7400f));
+        public static AudioClip MouseDeath => s_MouseDeath != null ? s_MouseDeath : s_MouseDeath = Make("Cri de souris", 0.5f, Chirps(new[] { 0f }, 0.42f, 8200f, 3600f));
+        public static AudioClip Splat => s_Splat != null ? s_Splat : s_Splat = Make("Splotch", 0.45f, SplatAt);
+
+        /// <summary>Couinements : sifflements aigus qui glissent d'une fréquence à l'autre, avec un léger vibrato.</summary>
+        static Gen Chirps(float[] starts, float length, float f0, float f1)
+        {
+            float phase = 0f;
+            return (float t, System.Random r, ref float s) =>
+            {
+                float v = 0f;
+                foreach (var t0 in starts)
+                {
+                    float d = t - t0;
+                    if (d < 0f || d > length) continue;
+                    float k = d / length;
+                    float f = Mathf.Lerp(f0, f1, k) * (1f + 0.04f * Mathf.Sin(d * 2f * Mathf.PI * 38f));
+                    phase += 2f * Mathf.PI * f / Rate;
+                    float env = Mathf.Sin(Mathf.PI * k) * Mathf.Clamp01(d / 0.004f);
+                    v += (Mathf.Sin(phase) + 0.3f * Mathf.Sin(phase * 2f)) * env * 0.35f;
+                }
+                return v;
+            };
+        }
+
+        static float SplatAt(float t, System.Random r, ref float lp)
+        {
+            // Choc mou et mouillé : bruit sourd filtré + petits clapotis.
+            lp += (Noise(r) - lp) * 0.08f;
+            float thud = lp * 3f * Mathf.Exp(-t * 18f) + Sin(90f, t) * Mathf.Exp(-t * 25f) * 0.6f;
+            float drips = 0f;
+            for (int k = 0; k < 5; k++)
+            {
+                float d = t - (0.06f + k * 0.055f + (k * 31 % 7) * 0.006f);
+                if (d > 0f) drips += Sin(900f + k * 230f, d) * Mathf.Exp(-d * 90f) * 0.18f;
+            }
+            return thud + drips;
+        }
+
         static AudioClip s_ActionOpen, s_ActionClose, s_DryFire, s_LoadRound;
         public static AudioClip ActionOpen => s_ActionOpen != null ? s_ActionOpen : s_ActionOpen = Make("Mécanisme ouvert", 0.12f, Clacks(new[] { 0f }, 1900f, 0.9f));
         public static AudioClip ActionClose => s_ActionClose != null ? s_ActionClose : s_ActionClose = Make("Mécanisme fermé", 0.14f, Clacks(new[] { 0f, 0.012f }, 1500f, 1f));

@@ -393,7 +393,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 8491238582337522424}
+  - {fileID: 4157384215058538638}
   m_Father: {fileID: 7041161691088650197}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &4025865247488408085
@@ -433,7 +433,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Fragile.Grab.GripSurface
   m_EndMargin: 0.008
   m_LocalAxis: {x: 1, y: 0, z: 0}
-  m_Source: {fileID: 8491238582337522424}
+  m_Source: {fileID: 4157384215058538638}
   m_FixedAim: 0
   m_AimLocal: {x: 0, y: 0, z: 1}
   m_UpLocal: {x: 0, y: 1, z: 0}
@@ -746,6 +746,46 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2374231562401741345}
+  m_Mesh: {fileID: 10203, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &3290526390469623491
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4157384215058538638}
+  - component: {fileID: 5392632531600608840}
+  m_Layer: 0
+  m_Name: Prise
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4157384215058538638
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3290526390469623491}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: -0.7071068, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.042, y: 0.09, z: 0.042}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4658731025764131673}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &5392632531600608840
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3290526390469623491}
   m_Mesh: {fileID: 10203, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &3457094323401882635
 GameObject:
@@ -1337,6 +1377,7 @@ MonoBehaviour:
   m_KickReturn: 14
   m_Haptic: 1
   m_KickRoot: {fileID: 1566363764224303195}
+  m_InfiniteAmmo: 1
   m_Capacity: 5
   m_StartLoaded: 4
   m_AmmoPrefab: {fileID: 5210114522854151106, guid: b1bd21c89ce78ad48bfd6c88ea6165f7, type: 3}
@@ -1650,43 +1691,3 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!1 &8918635740686886782
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8491238582337522424}
-  - component: {fileID: 6492566259520959479}
-  m_Layer: 0
-  m_Name: Prise
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &8491238582337522424
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8918635740686886782}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: -0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.042, y: 0.09, z: 0.042}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4658731025764131673}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &6492566259520959479
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8918635740686886782}
-  m_Mesh: {fileID: 10203, guid: 0000000000000000e000000000000000, type: 0}

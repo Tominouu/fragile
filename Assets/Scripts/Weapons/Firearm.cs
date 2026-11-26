@@ -215,6 +215,7 @@ namespace Fragile.Weapons
                 float energy = Mathf.Clamp01(m_Energy * Mathf.Lerp(1f, 1.6f, (count - 1) / 7f));
                 switch (kv.Key)
                 {
+                    case IHittable h: h.Hit(point, dir, energy, m_Push * count); break;
                     case Breakable b: b.Shot(point, normal, dir, m_Damage * count, energy); break;
                     case GlassPane g: g.Hit(point, dir, Mathf.Max(energy, 0.6f)); break;
                     case Fragile.TV.TvBreakable tv: tv.Hit(point, dir, energy); break;
@@ -222,6 +223,7 @@ namespace Fragile.Weapons
             }
 
             Sfx.PlayAt(ShotClip, origin, 1f, Random.Range(0.96f, 1.04f));
+            Fragile.Mice.Mouse.ScareAll(origin, 8f);   // les souris détalent au bruit
             StartCoroutine(Flash());
             Kick();
             Haptics(m_Haptic, m_Kind == Kind.Pistol ? 0.08f : 0.16f);
@@ -255,7 +257,8 @@ namespace Fragile.Weapons
         void Impact(RaycastHit hit, Vector3 dir, Dictionary<Component, (Vector3, Vector3, Vector3, int)> hits)
         {
             var col = hit.collider;
-            Component target = col.GetComponentInParent<Breakable>();
+            Component target = col.GetComponentInParent<IHittable>() as Component;
+            if (target == null) target = col.GetComponentInParent<Breakable>();
             if (target == null) target = col.GetComponent<GlassPane>() ?? col.GetComponentInParent<GlassPane>();
             if (target == null) target = col.GetComponentInParent<Fragile.TV.TvBreakable>();
             if (target != null)

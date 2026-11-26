@@ -42,6 +42,12 @@ def import_one(asset_id, workdir):
     bpy.ops.object.parent_clear(type="CLEAR_KEEP_TRANSFORM")
     bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
 
+    # Allègement optionnel (Quest) : FRAGILE_DECIMATE=0.25 garde 25 % des faces.
+    ratio = float(os.environ.get("FRAGILE_DECIMATE", "1"))
+    if ratio < 1.0:
+        for o in meshes:
+            mod = o.modifiers.new("Decimate", "DECIMATE"); mod.ratio = ratio
+
     report = []
     fue.export_group(bpy.context, meshes, asset_id, ASSETS, SUB, False, report)
     mf = os.path.join(ASSETS, SUB, fue.safe_name(asset_id), fue.MANIFEST_NAME)
