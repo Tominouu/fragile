@@ -7,6 +7,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_Billets
+    second: {fileID: 2100000, guid: ea53a6c8539b6ae41a971a5ad6015e34, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_Chrome
     second: {fileID: 2100000, guid: e9c8caf09801c014281133f55fec1ae7, type: 2}
   - first:
@@ -14,6 +19,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: M_Ecran_Vert
     second: {fileID: 2100000, guid: c7cca026d8c90e9459483a61f0038345, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Ombre
+    second: {fileID: 2100000, guid: ca726afe2bf9a5741ba3cd0ec29366a2, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

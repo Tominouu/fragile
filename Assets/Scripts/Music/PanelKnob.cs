@@ -22,6 +22,7 @@ namespace Fragile.Music
 
         public UnityEvent<float> valueChanged => m_ValueChanged;
         public float value => m_Value;
+        public Transform model => m_Model;
 
         Vector3 m_RestPos;      // pose d'origine du modèle, dans le repère de la molette
         Quaternion m_RestRot;

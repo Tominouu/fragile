@@ -43,6 +43,7 @@ namespace Fragile.EditorTools
 
             foreach (var s in Spots) PrepareModel(s.model);
             SetupEmission();
+            BarDecorInteractions.EnsureHighlightMaterial();
 
             var old = room.transform.Find(RootName);
             if (old != null) Undo.DestroyObjectImmediate(old.gameObject);
@@ -55,6 +56,9 @@ namespace Fragile.EditorTools
                 var model = AssetDatabase.LoadAssetAtPath<GameObject>($"{Folder}/{s.model}/{s.model}.fbx");
                 if (model == null) { Debug.LogWarning($"[Fragile] Modèle absent : {s.model} (exporte-le depuis Blender)."); continue; }
                 var go = (GameObject)PrefabUtility.InstantiatePrefab(model, root);
+                // Détaché du FBX : on réorganise ses pièces (boutons, charnières), ce qu'une instance de préfab interdit.
+                // L'outil reconstruit tout à chaque passage, le lien n'apporte rien.
+                PrefabUtility.UnpackPrefabInstance(go, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
                 go.name = s.name;
                 go.transform.rotation = Quaternion.Euler(0f, s.rotY, 0f);
 
@@ -62,16 +66,15 @@ namespace Fragile.EditorTools
                 float surface = SurfaceBelow(new Vector3(s.x, 0f, s.z), go);
                 go.transform.position += new Vector3(s.x - b.center.x, surface - b.min.y, s.z - b.center.z);
 
-                // Objet statique (sauf la porte du frigo, qui bouge).
-                var door = go.transform.Find("Porte");
-                foreach (var r in go.GetComponentsInChildren<MeshRenderer>())
+                // Seul le corps de l'appareil est statique : les pièces mobiles (porte, touches, leviers...) bougent.
+                var body = go.transform.Find("Corps");
+                if (body != null && body.TryGetComponent<MeshRenderer>(out var br))
                 {
-                    if (door != null && r.transform.IsChildOf(door)) continue;
-                    GameObjectUtility.SetStaticEditorFlags(r.gameObject, StaticEditorFlags.ContributeGI | StaticEditorFlags.BatchingStatic | StaticEditorFlags.ReflectionProbeStatic);
-                    r.receiveGI = ReceiveGI.Lightmaps;
+                    GameObjectUtility.SetStaticEditorFlags(body.gameObject, StaticEditorFlags.ContributeGI | StaticEditorFlags.BatchingStatic | StaticEditorFlags.ReflectionProbeStatic);
+                    br.receiveGI = ReceiveGI.Lightmaps;
                 }
-                GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic);
 
+                var door = go.transform.Find("Porte");
                 if (door != null) SetupFridge(go, door, s.name.EndsWith("2") ? FridgeB : FridgeA);
                 else
                 {
@@ -80,6 +83,7 @@ namespace Fragile.EditorTools
                     var lb = LocalBounds(go);
                     col.center = lb.center; col.size = lb.size;
                 }
+                BarDecorInteractions.Setup(go, s.model);
                 log.Append($"\n  {s.name} : ({s.x:F2}, {surface:F2}, {s.z:F2})");
             }
 
@@ -264,6 +268,7 @@ namespace Fragile.EditorTools
         /// <summary>UV de lightmap pour les objets statiques.</summary>
         static void PrepareModel(string model)
         {
+            BlenderModelImporter.ImportFolder($"{Folder}/{model}");   // matériaux à jour après un nouvel export
             if (AssetImporter.GetAtPath($"{Folder}/{model}/{model}.fbx") is ModelImporter imp && !imp.generateSecondaryUV)
             {
                 imp.generateSecondaryUV = true;
