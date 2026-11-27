@@ -16,20 +16,23 @@ namespace Fragile.Bar
         [SerializeField] float m_Rate = 140f;
         [SerializeField] Material m_Material;
         [SerializeField] float m_Volume = 0.6f;
+        [Tooltip("Famille de sons enregistrés jouée en boucle (ex. Biere_Ecoulement). Vide ou absente : écoulement généré.")]
+        [SerializeField] string m_LoopFamily = "";
 
         ParticleSystem m_Particles;
         AudioSource m_Sound;
         float m_Flow;
 
-        public void Setup(Color color, Color foam, float width, Material material)
+        public void Setup(Color color, Color foam, float width, Material material, string loopFamily = "")
         {
-            m_Color = color; m_Foam = foam; m_Width = width; m_Material = material;
+            m_Color = color; m_Foam = foam; m_Width = width; m_Material = material; m_LoopFamily = loopFamily;
         }
 
         void Awake()
         {
             m_Particles = Build();
-            m_Sound = Sfx.Loop(transform, Sfx.Pour);
+            var clip = string.IsNullOrEmpty(m_LoopFamily) ? null : SfxBank.Pick(m_LoopFamily);
+            m_Sound = Sfx.Loop(transform, clip != null ? clip : Sfx.Pour);
         }
 
         public float flow

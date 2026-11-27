@@ -25,8 +25,8 @@ namespace Fragile.EditorTools
             switch (type)
             {
                 case "Tireuse_Biere": Tap(model.transform); break;
-                case "Caisse_Enregistreuse": Register(model.transform); break;
-                case "Machine_Cafe": Coffee(model.transform); break;
+                // Caisse et machine à café : simple décor (cassable), plus utilisables (choix de l'équipe, nov. 2026).
+                // Register() et Coffee() restent disponibles si on veut les réactiver.
                 case "Machine_Glacons": Ice(model.transform); break;
                 case "Distributeur_Boissons": Vending(model.transform); break;
             }
@@ -67,7 +67,7 @@ namespace Fragile.EditorTools
                 spout.SetParent(root, false);
                 spout.localPosition = lever.localPosition + new Vector3(0f, -0.098f, 0f);
                 var s = spout.gameObject.AddComponent<LiquidStream>();
-                s.Setup(new Color(0.88f, 0.56f, 0.12f, 0.85f), new Color(1f, 0.96f, 0.85f, 0.95f), 0.011f, StreamMaterial());
+                s.Setup(new Color(0.88f, 0.56f, 0.12f, 0.85f), new Color(1f, 0.96f, 0.85f, 0.95f), 0.011f, StreamMaterial(), Fragile.Audio.SfxBank.BiereEcoulement);
                 streams.Add(s);
             }
             root.gameObject.AddComponent<BeerTap>().Setup(levers.ToArray(), streams.ToArray());

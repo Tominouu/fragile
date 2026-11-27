@@ -35,7 +35,7 @@ namespace Fragile.TV
         [SerializeField] GameObject m_FxPrefab;
         [SerializeField] AudioClip m_GlassClip;
 
-        static AudioClip s_Zap, s_Thud;
+        static AudioClip s_Thud;
 
         Rigidbody m_Body;
         TvVideo m_Video;
@@ -57,7 +57,6 @@ namespace Fragile.TV
             m_Body.isKinematic = true;
             m_Video = GetComponentInParent<TvVideo>();
             // Préchargement : rien à fabriquer au moment du coup.
-            if (s_Zap == null) s_Zap = CreateZap();
             if (s_Thud == null) s_Thud = SmashSynth.Create();
             Fragile.Audio.SfxBank.Preload(Fragile.Audio.SfxBank.ImpactLourd, Fragile.Audio.SfxBank.VerreVinCasse, Fragile.Audio.SfxBank.ShotCasse);
             if (m_GlassClip != null) m_GlassClip.LoadAudioData();
@@ -137,7 +136,6 @@ namespace Fragile.TV
             {
                 m_Sparks.transform.position = onScreen;
                 m_Sparks.Emit(25);
-                PlaySound(s_Zap, onScreen, 0.6f, Random.Range(0.9f, 1.15f));
                 PlaySound(m_GlassClip, onScreen, 0.35f, 1.2f);
                 AddCracks(p, energy);
             }
@@ -180,7 +178,6 @@ namespace Fragile.TV
             // Écran brisé : même fracas de verre que les bouteilles.
             if (!BreakableSounds.PlayGlassBreak(onScreen, 1f, Random.Range(0.95f, 1.05f)))
                 PlaySound(m_GlassClip, onScreen, 1f, Random.Range(0.8f, 0.9f));
-            PlaySound(s_Zap, onScreen, 0.9f, 1f);
             StartCoroutine(Sparkle(onScreen));
         }
 
@@ -194,7 +191,6 @@ namespace Fragile.TV
             {
                 yield return new WaitForSeconds(Random.Range(0.15f, 0.5f) + i * 0.25f);
                 m_Sparks.Emit(Random.Range(8, 26));
-                PlaySound(s_Zap, m_Sparks.transform.position, Random.Range(0.15f, 0.4f), Random.Range(0.9f, 1.4f));
             }
         }
 
@@ -211,7 +207,6 @@ namespace Fragile.TV
             m_Body.linearVelocity = transform.forward * 0.8f + direction * Mathf.Lerp(0.1f, 0.6f, energy);
             m_Body.angularVelocity = transform.right * Random.Range(1f, 2.2f) + transform.forward * Random.Range(-1f, 1f);
             m_Sparks.Emit(40);
-            PlaySound(s_Zap, point, 0.8f, 0.8f);
             Thud(point, 0.6f);
         }
 
@@ -412,27 +407,6 @@ namespace Fragile.TV
             src.volume = volume; src.pitch = pitch;
             src.Play();
             Destroy(go, clip.length / pitch + 0.2f);
-        }
-
-        /// <summary>Court-circuit généré par le code : bourdonnement 100 Hz haché et claquements.</summary>
-        static AudioClip CreateZap()
-        {
-            const int rate = 44100;
-            int n = (int)(rate * 0.45f);
-            var d = new float[n];
-            var rng = new System.Random(3);
-            float gate = 1f;
-            for (int i = 0; i < n; i++)
-            {
-                float t = i / (float)rate;
-                if (i % 350 == 0) gate = rng.NextDouble() < 0.6 ? 1f : 0.1f;
-                float buzz = Mathf.Sign(Mathf.Sin(2f * Mathf.PI * 100f * t)) * 0.25f;
-                float noise = ((float)rng.NextDouble() * 2f - 1f) * 0.7f;
-                d[i] = (buzz + noise) * gate * Mathf.Exp(-t * 8f) * 0.8f;
-            }
-            var clip = AudioClip.Create("Court-circuit", n, 1, rate, false);
-            clip.SetData(d, 0);
-            return clip;
         }
     }
 }

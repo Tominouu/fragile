@@ -30,10 +30,10 @@ namespace Fragile.Weapons
 
         string Family => matter switch
         {
-            Matter.RifleBrass => SfxBank.DouilleCarabine,
             Matter.Plastic => SfxBank.DouillePlastique,
             Matter.Magazine => SfxBank.ObjetTombe,
-            _ => SfxBank.DouillePistolet,
+            // Pistolet et carabine partagent la même chute de douille laiton (l'enregistrement pistolet sonnait faux).
+            _ => SfxBank.DouilleCarabine,
         };
 
         void OnCollisionEnter(Collision c)

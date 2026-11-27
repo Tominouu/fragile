@@ -118,11 +118,21 @@ namespace Fragile.EditorTools
                 foreach (Transform t in furniture.transform)
                     if (t.name == "Table" && t.TryGetComponent<Collider>(out var col))
                         positions.Add(new Vector3(col.bounds.center.x, PendantY, col.bounds.center.z));
+            // Abat-jour et ampoule : un objet cassable par suspension (cordon et rosace restent au plafond).
+            dome = SaveMesh(dome, "Suspension_Dome");
+            inside = SaveMesh(inside, "Suspension_Interieur");
+            DecorBreakables.ResetCache();
+            int n = 0;
             foreach (var p in positions)
             {
-                Add(dome, p, Quaternion.identity, Vector3.one, brass);
-                Add(inside, p, Quaternion.identity, Vector3.one, inner);
-                Add(Prim(PrimitiveType.Sphere), p + Vector3.up * 0.045f, Quaternion.identity, Vector3.one * 0.07f, bulb);
+                var lamp = new GameObject("Suspension cassable " + ++n);
+                lamp.transform.SetParent(s_Root, false);
+                lamp.transform.position = p;
+                Part(lamp.transform, "Abat-jour", dome, Vector3.zero, Vector3.one, brass);
+                Part(lamp.transform, "Intérieur", inside, Vector3.zero, Vector3.one, inner);
+                Part(lamp.transform, "Ampoule", Prim(PrimitiveType.Sphere), Vector3.up * 0.045f, Vector3.one * 0.07f, bulb);
+                // Un seul coup (verre de l'ampoule) ; la lumière précalculée reste, mais l'ampoule visible disparaît.
+                DecorBreakables.Make(lamp, "Suspension", Fragile.Breakables.Breakable.Matter.Glass, 1f);
                 float h = top - (p.y + 0.17f);
                 Add(Prim(PrimitiveType.Cylinder), p + Vector3.up * (0.17f + h / 2f), Quaternion.identity, new Vector3(0.008f, h / 2f, 0.008f), black);
                 Add(Prim(PrimitiveType.Cylinder), new Vector3(p.x, top - 0.012f, p.z), Quaternion.identity, new Vector3(0.11f, 0.012f, 0.11f), brass);
@@ -348,6 +358,51 @@ namespace Fragile.EditorTools
 
         static Bounds BoundsOf(string name) => GameObject.Find(name).GetComponent<Renderer>().bounds;
 
+        /// <summary>Reconstruction des luminaires seuls : ni lumières, ni corniche (déjà en place), pas de recalcul.</summary>
+        static bool s_FixturesOnly;
+
+        /// <summary>
+        /// Refait les maillages des luminaires et les suspensions cassables sans toucher aux lumières ni aux lightmaps
+        /// (les luminaires sont émissifs et hors lightmaps).
+        /// </summary>
+        [MenuItem("Fragile/Reconstruire les luminaires (sans recalcul)")]
+        public static void RebuildFixtures()
+        {
+            if (EditorApplication.isPlaying) { Debug.LogWarning("[Fragile] Quitte le mode Play d'abord."); return; }
+            var room = GameObject.Find("Room");
+            var root = room != null ? room.transform.Find(RootName) : null;
+            if (root == null) { Debug.LogError("[Fragile] Éclairage introuvable : lance d'abord « Éclairer le Bar »."); return; }
+            float xMin = BoundsOf("Wall_West").max.x, xMax = BoundsOf("Wall_East").min.x;
+            float zMin = BoundsOf("Wall_South").max.z, zMax = BoundsOf("Wall_North").min.z;
+            float top = BoundsOf("Ceiling").min.y;
+
+            foreach (var t in root.Cast<Transform>().Where(t => t.name.StartsWith("Luminaires ") || t.name.StartsWith("Suspension cassable")).ToList())
+                Undo.DestroyObjectImmediate(t.gameObject);
+            s_Parts.Clear();
+            s_Root = root;
+            s_FixturesOnly = true;
+            try
+            {
+                var brass = Lit("Laiton", new Color(0.72f, 0.50f, 0.22f), 1f, 0.72f);
+                var black = Lit("Metal_Noir", new Color(0.03f, 0.028f, 0.026f), 0.6f, 0.45f);
+                var wood = Lit("Corniche_Bois", new Color(0.13f, 0.075f, 0.045f), 0f, 0.35f);
+                var bulb = Glow("Ampoule", new Color(2.6f, 1.9f, 1.1f));
+                var inner = Glow("Interieur_Abat_Jour", new Color(1.0f, 0.60f, 0.24f));
+                var led = Glow("Led", new Color(1.9f, 1.0f, 0.36f));
+                Pendants(top, brass, black, bulb, inner);
+                CounterLeds(led);
+                Cove(xMin, xMax, zMin, zMax, top, wood);
+                Sconces(xMin, xMax, zMin, zMax, brass, bulb);
+                BuildFixtureMeshes();
+            }
+            finally { s_FixturesOnly = false; }
+            var scene = EditorSceneManager.GetActiveScene();
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Fragile] Luminaires reconstruits (suspensions cassables).");
+        }
+
         static Light NewLight(string name, Vector3 pos, Color c, float intensity)
         {
             var go = new GameObject(name);
@@ -362,6 +417,7 @@ namespace Fragile.EditorTools
 
         static void Spot(string name, Vector3 pos, Vector3 dir, Color c, float intensity, float outer, float innerAngle, float range)
         {
+            if (s_FixturesOnly) return;
             var l = NewLight(name, pos, c, intensity);
             l.type = LightType.Spot;
             l.spotAngle = outer; l.innerSpotAngle = innerAngle; l.range = range;
@@ -371,6 +427,7 @@ namespace Fragile.EditorTools
 
         static void Area(string name, Vector3 pos, Vector3 dir, Vector3 along, Vector2 size, Color c, float intensity)
         {
+            if (s_FixturesOnly) return;
             var l = NewLight(name, pos, c, intensity);
             l.type = LightType.Rectangle;
             l.areaSize = size;                       // x = le long de « along »
@@ -381,6 +438,7 @@ namespace Fragile.EditorTools
 
         static void Box(string name, Vector3 pos, Quaternion rot, Vector3 scale, Material mat)
         {
+            if (s_FixturesOnly) return;
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = name;
             Object.DestroyImmediate(go.GetComponent<Collider>());
@@ -393,6 +451,31 @@ namespace Fragile.EditorTools
         }
 
         static Mesh Prim(PrimitiveType t) => Resources.GetBuiltinResource<Mesh>(t + ".fbx");
+
+        static void Part(Transform parent, string name, Mesh mesh, Vector3 localPos, Vector3 scale, Material mat)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPos;
+            go.transform.localScale = scale;
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var r = go.AddComponent<MeshRenderer>();
+            r.sharedMaterial = mat;
+            r.shadowCastingMode = ShadowCastingMode.Off;
+            GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.ReflectionProbeStatic);
+        }
+
+        static Mesh SaveMesh(Mesh m, string name)
+        {
+            string path = $"{Folder}/{name}.asset";
+            var existing = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            if (existing == null) { m.name = name; AssetDatabase.CreateAsset(m, path); return m; }
+            existing.Clear();
+            existing.SetVertices(m.vertices); existing.SetUVs(0, m.uv); existing.SetTriangles(m.triangles, 0);
+            existing.RecalculateNormals(); existing.RecalculateTangents(); existing.RecalculateBounds();
+            EditorUtility.SetDirty(existing);
+            return existing;
+        }
 
         static void Add(Mesh m, Vector3 p, Quaternion r, Vector3 s, Material mat)
         {

@@ -23,6 +23,8 @@ namespace Fragile.Audio
         public const string DouillePistolet = "Douille_Pistolet", DouilleCarabine = "Douille_Carabine", DouillePlastique = "Douille_Plastique";
         public const string PompeArriere = "Pompe_Arriere", PompeAvant = "Pompe_Avant";
         public const string VerrouReleve = "Verrou_Releve", VerrouTire = "Verrou_Tire", VerrouPousse = "Verrou_Pousse", VerrouRabattu = "Verrou_Rabattu";
+        // Familles à remplir (dossiers créés vides) : tant qu'elles sont vides, l'ancien son reste.
+        public const string MarbreCoup = "Marbre_Coup", Glacon = "Glacon", PorcelaineCasse = "Porcelaine_Casse", BiereEcoulement = "Biere_Ecoulement";
 
         static readonly Dictionary<string, AudioClip[]> s_Clips = new Dictionary<string, AudioClip[]>();
         static readonly Dictionary<string, int> s_Last = new Dictionary<string, int>();

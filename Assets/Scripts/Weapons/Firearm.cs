@@ -559,6 +559,8 @@ namespace Fragile.Weapons
             if (m_Chamber == Chamber.Spent) Eject();
             else if (m_Chamber == Chamber.Live) EjectLive();
             m_Chamber = Chamber.Empty;
+            // Recul automatique du pistolet au tir : la détonation couvre déjà la culasse, pas de clac synthétique en plus.
+            if (m_Blowback) return;
             // Fusil à pompe et carabine : sons enregistrés (pompe tirée, verrou tiré) ; le son généré reste pour le pistolet.
             string family = m_Kind == Kind.Shotgun ? SfxBank.PompeArriere : m_Kind == Kind.Rifle ? SfxBank.VerrouTire : null;
             if (family == null || !SfxBank.Play(family, transform.position, m_Kind == Kind.Rifle ? BoltVolume : 0.9f, Random.Range(0.97f, 1.03f)))
@@ -569,6 +571,7 @@ namespace Fragile.Weapons
         void Closed()
         {
             if (m_Chamber == Chamber.Empty && CanFeed) { m_Chamber = Chamber.Live; if (!m_InfiniteAmmo) m_Loaded--; }
+            if (m_Blowback) return;   // voir Opened : silencieux pendant le recul automatique
             string family = m_Kind == Kind.Shotgun ? SfxBank.PompeAvant : m_Kind == Kind.Rifle ? SfxBank.VerrouPousse : null;
             if (family == null || !SfxBank.Play(family, transform.position, m_Kind == Kind.Rifle ? BoltVolume : 0.9f, Random.Range(0.97f, 1.03f)))
                 Sfx.PlayAt(Sfx.ActionClose, transform.position, 0.8f, m_Kind == Kind.Pistol ? 1.3f : 1f);

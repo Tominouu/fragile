@@ -97,8 +97,9 @@ namespace Fragile.Breakables
                     s.brk = new[] { new Layer(SfxBank.VerreVinCasse, 1f), new Layer(SfxBank.ShotCasse, 0.6f) };
                     s.glass = true;
                     break;
-                default: // céramique : coups enregistrés, casse générée (aucun son de céramique dans la banque)
+                default: // céramique (trophée…) : casse de porcelaine enregistrée, sinon le fracas des bouteilles
                     s.hit = new[] { SfxBank.ImpactLeger };
+                    s.brk = SfxBank.Clips(SfxBank.PorcelaineCasse).Length > 0 ? new[] { new Layer(SfxBank.PorcelaineCasse, 1f) } : GlassBreak;
                     s.fall = SfxBank.ObjetTombe;
                     break;
             }

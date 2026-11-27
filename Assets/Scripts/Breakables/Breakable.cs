@@ -370,9 +370,38 @@ namespace Fragile.Breakables
             if (m_Sparks != null) Destroy(m_Sparks.gameObject, 1f);
 
             Fragile.Mice.Mouse.ScareAll(point, 3f);   // fracas : les souris voisines détalent
+            ReleaseResting();
             ReleaseHands();
             gameObject.SetActive(false);
             Destroy(gameObject, 0.1f);
+        }
+
+        /// <summary>
+        /// Décor immobile (cinématique) posé sur cet objet, comme le trophée sur les étagères : son support disparaît,
+        /// il retrouve la gravité et tombe.
+        /// </summary>
+        void ReleaseResting()
+        {
+            var own = GetComponentsInChildren<Collider>();
+            if (own.Length == 0) return;
+            var b = own[0].bounds;
+            foreach (var c in own) b.Encapsulate(c.bounds);
+            const float below = 0.06f, above = 0.12f;
+            var center = new Vector3(b.center.x, b.max.y + (above - below) * 0.5f, b.center.z);
+            var half = new Vector3(b.extents.x, (above + below) * 0.5f, b.extents.z);
+            var released = new System.Collections.Generic.HashSet<Rigidbody>();
+            foreach (var c in Physics.OverlapBox(center, half, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore))
+            {
+                var rb = c.attachedRigidbody;
+                if (rb == null || !rb.isKinematic || released.Contains(rb) || rb.transform.IsChildOf(transform)) continue;
+                if (rb.GetComponent<Breakable>() == null) continue;            // seulement le décor cassable (pas portes, armes…)
+                if (c.bounds.min.y < b.max.y - below) continue;                 // à côté, pas dessus
+                released.Add(rb);
+                rb.isKinematic = false;
+                rb.interpolation = RigidbodyInterpolation.Interpolate;
+                rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+                rb.WakeUp();
+            }
         }
 
         /// <summary>
@@ -441,6 +470,9 @@ namespace Fragile.Breakables
                 rb.mass = Mathf.Max(0.02f, m_Mass * Volume(mesh) / Mathf.Max(1e-6f, totalVolume));
                 rb.interpolation = RigidbodyInterpolation.Interpolate;
                 rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+                // Les boîtes des morceaux naissent imbriquées (entre elles, dans le comptoir ou le mur) : sans limite, la
+                // physique les dégage à grande vitesse et ils traversent la pièce (trappe à glaçons, trophée).
+                rb.maxDepenetrationVelocity = 0.5f;
 
                 // Les morceaux proches de l'impact partent plus vite et plus dans le sens du coup.
                 var fromImpact = go.transform.position - point;

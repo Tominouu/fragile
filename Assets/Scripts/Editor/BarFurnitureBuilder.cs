@@ -136,7 +136,7 @@ namespace Fragile.EditorTools
                 go.transform.localScale = it.scale;
                 go.transform.rotation = Quaternion.Euler(0f, it.rotY, 0f);
                 Place(go, it);
-                Finish(go, it.kind);
+                Finish(go, it.kind, it.model);
                 var spots = it.model == "wooden_display_shelves_01" ? ShelfSpots(go) : null;
                 MakeBreakable(go, it);
                 if (spots != null) FillShelf(root, go, spots);
@@ -283,7 +283,10 @@ namespace Fragile.EditorTools
             go.transform.position = pos;
         }
 
-        static void Finish(GameObject go, Kind kind)
+        /// <summary>Sièges : collider à la forme du maillage (une boîte englobante ferait flotter canettes et bouteilles à hauteur du dossier).</summary>
+        static readonly HashSet<string> s_ShapedColliders = new HashSet<string> { "Sofa_01", "modern_arm_chair_01", "mid_century_lounge_chair", "painted_wooden_bench" };
+
+        static void Finish(GameObject go, Kind kind, string model)
         {
             bool small = kind == Kind.Wall || kind == Kind.OnTop || kind == Kind.Hanging;
             foreach (var r in go.GetComponentsInChildren<MeshRenderer>())
@@ -293,7 +296,11 @@ namespace Fragile.EditorTools
                 r.receiveGI = small ? ReceiveGI.LightProbes : ReceiveGI.Lightmaps;
             }
             GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic);
-            if (kind == Kind.Floor || kind == Kind.OnTop)
+            if ((kind == Kind.Floor || kind == Kind.OnTop) && s_ShapedColliders.Contains(model) && go.TryGetComponent<MeshFilter>(out var mf))
+            {
+                go.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;   // cinématique : non convexe autorisé
+            }
+            else if (kind == Kind.Floor || kind == Kind.OnTop)
             {
                 var col = go.AddComponent<BoxCollider>();
                 var lb = LocalBounds(go);
@@ -332,6 +339,14 @@ namespace Fragile.EditorTools
             bool barrel = it.model == "wine_barrel_01";
             DecorBreakables.Make(go, it.model + (it.artwork != null ? "_" + it.artwork : ""), matter, hits,
                 dynamic: it.kind == Kind.OnTop, liquid: barrel, liquidColor: barrel ? new Color(0.45f, 0.04f, 0.1f, 0.9f) : (Color?)null);
+            // Trophée : céramique mais gros morceaux lourds. Avec la projection du verre (1), ils traversaient la pièce
+            // comme en apesanteur ; ici ils tombent du mur comme les morceaux d'un meuble.
+            if (it.model == "bull_head" && go.TryGetComponent<Breakable>(out var trophy))
+            {
+                var so = new SerializedObject(trophy);
+                so.FindProperty("m_Burst").floatValue = 0.3f;
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
         }
 
         /// <summary>Remplace l'œuvre d'un cadre par une image de Assets/Bar/Tableaux (matériau propre, posé dans la scène).</summary>

@@ -133,6 +133,7 @@ Tools/Blender/fragile_unity_export.py   addon Blender « Fragile - Export vers U
 | (casse du décor) | Aménager/Meubler rendent TOUT cassable via `DecorBreakables.Make(go, clé, matière, coups)` : pièces fusionnées puis découpées EN PIÈCES (îlots de maillage : pieds, assise, panneaux, touches, douelles ; grosses pièces fendues en 2-4, métal cabossé) — céramique seule en éclats de Voronoï, éclats dans `Assets/Bar/Casse` partagés par modèle. Plusieurs coups selon l'objet (`m_Hits` de Breakable : bouteille 1, chaise 6, frigo 8, distributeur 10…) : dès le 1er coup l'objet est remplacé par ses pièces en place qui se disjoignent à chaque coup (fissures visibles, `Breakable.Crack`), + marque (Degats_<matière>), fait trembler l'objet et sonne selon la matière. Rigidbody cinématique, pas de Batching Static (tremblement) mais lightmappé. Plantes de table libres, bouteilles des frigos hors de leur hiérarchie. Limite : l'ombre précalculée d'un objet cassé reste |
 | Placer les armes | fabrique les 3 préfabs d'armes et leurs munitions (racine = centre de la poignée ; Visuals > Recul > Modèle ; poignée invisible mesurée par GripSurface ; colliders en tranches ; poignées secondaires GunHandle ; zone de chargement ; liste de colliders de l'arme SANS ceux des poignées, réglée via SerializedObject « m_Colliders » — l'API `colliders` n'était pas enregistrée dans le préfab) et les pose : fusil à pompe sur râtelier sous l'enseigne FRAGILE, carabine sur râtelier au mur sud, pistolet sur le comptoir près de la caisse (plus de boîtes de munitions ni de plateau de chargeurs : munitions infinies). Réglages de chaque arme dans `WeaponBuilder` (Spec : poignée, bouche, dégâts, recul…). Râteliers non GI-statiques : pas besoin de relancer l'éclairage |
 | Ajouter les souris | préfab de souris, 4 trous dans les plinthes, nid (objet « Souris »), matériaux et textures du sang (Assets/Bar/Souris/FX, générées). Pas besoin de relancer l'éclairage |
+| Reconstruire les luminaires (sans recalcul) | refait les maillages des luminaires et les 11 suspensions cassables (abat-jour + ampoule = un `Breakable` verre, 1 coup ; cordon et rosace restent au plafond) sans toucher aux lumières ni relancer les lightmaps. La lumière précalculée reste après la casse |
 | Rendre le marbre marquable | génère la texture d'impacts (`Assets/Bar/FX/Impacts`) et pose `ImpactMarks` sur le comptoir |
 | Animer la platine vinyle | branche bouton marche/arrêt, molette de volume, disque, bras, égaliseur et son sur la platine de la scène |
 
@@ -141,7 +142,18 @@ Tools/Blender/fragile_unity_export.py   addon Blender « Fragile - Export vers U
    L'addon : bonne carte UV, textures extraites/converties (webp → png), détection du verre, `fragile_export.json`.
 2. Unity : *Fragile > Importer les modèles Blender*. Champ `"place": false` dans le json = ne pas poser automatiquement (cas des bouteilles).
 
+## Banque de sons (Assets/Bar/Resources/Sons/<Famille>/)
+- Un dossier = une famille (`SfxBank`), variantes tirées au hasard. Famille vide = ancien son généré par le code.
+- Dossiers créés vides, à remplir (nov. 2026) : `Marbre_Coup` (batte sur le comptoir, sinon Impact_Lourd), `Glacon`
+  (tintements), `Porcelaine_Casse` (casse céramique : trophée ; sinon fracas des bouteilles), `Biere_Ecoulement`
+  (boucle de la tireuse, champ `LiquidStream.m_LoopFamily` : choisir un son qui boucle proprement).
+- Plus de grésillement électrique quand une télé casse. Caisse et machine à café : simple décor cassable (plus de touches).
+
 ## Pièges connus (déjà rencontrés)
+- **Éclats imbriqués** : `Breakable.SpawnShards` limite `maxDepenetrationVelocity` à 0,5 m/s, sinon les boîtes des morceaux
+  (imbriquées entre elles ou dans le comptoir) étaient éjectées à travers la pièce (trappe à glaçons, trophée).
+- Un décor cinématique posé sur un objet qui casse retombe (`Breakable.ReleaseResting` : trophée sur les étagères).
+- Sièges (canapé, fauteuils, bancs) : `MeshCollider` à la forme du maillage, pas de boîte englobante (objets qui flottaient).
 - **Ne jamais utiliser `EditorUtility.CopySerialized` pour mettre à jour un maillage** : les SkinnedMeshRenderer gardent l'ancienne taille → mains invisibles. Utiliser `mesh.Clear()` + API Mesh.
 - **NaN en mode édition = crash d'Unity** (rendu). Garde-fous présents dans ControllerHandPose (poids nuls, position invalide).
 - Pendant une prise, **la main est enfant de l'objet** : tout objet détruit doit d'abord relâcher les mains (`Breakable.ReleaseHands`).

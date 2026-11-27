@@ -43,7 +43,7 @@ namespace Fragile.Bar
             var t = interactor.GetAttachTransform(this);
             var ice = Instantiate(m_IcePrefab, t.position, Random.rotation);
             Track(ice);
-            Sfx.PlayAt(Sfx.Clink, t.position, 0.6f, Random.Range(0.9f, 1.15f));
+            ImpactSound.PlayIce(t.position, 0.6f, Random.Range(0.9f, 1.15f));
             if (interactionManager == null) yield break;
             if (isSelected) interactionManager.SelectExit(interactor, (IXRSelectInteractable)this);
             if (ice.TryGetComponent<XRGrabInteractable>(out var grab))

@@ -148,7 +148,8 @@ namespace Fragile.EditorTools
             }
             SetupGlass(door);
             var handle = door.gameObject.AddComponent<BoxCollider>();
-            handle.center = new Vector3(-0.55f, 1.0f, 0.04f); handle.size = new Vector3(0.09f, 0.6f, 0.08f);
+            // Zone de prise large (16 × 90 cm, déborde de 10 cm devant la porte) : la main l'attrape sans viser la poignée.
+            handle.center = new Vector3(-0.54f, 0.95f, 0.06f); handle.size = new Vector3(0.16f, 0.9f, 0.12f);
             var hinge = door.gameObject.AddComponent<Fragile.Grab.HingedDoor>();
             var so = new SerializedObject(hinge);
             var cols = so.FindProperty("m_Colliders");

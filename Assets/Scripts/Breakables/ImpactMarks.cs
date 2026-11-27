@@ -37,6 +37,7 @@ namespace Fragile.Breakables
             m_Colliders = GetComponentsInChildren<Collider>();
             if (s_Quads == null) s_Quads = CreateQuads();
             if (s_Knock == null) s_Knock = CreateKnock();
+            Fragile.Audio.SfxBank.Preload(Fragile.Audio.SfxBank.MarbreCoup, Fragile.Audio.SfxBank.ImpactLourd);
             BreakFx.Prewarm(m_FxPrefab, 1);
         }
 
@@ -127,6 +128,10 @@ namespace Fragile.Breakables
 
         static void PlayKnock(Vector3 point, float energy)
         {
+            // Coups enregistrés sur la pierre ; à défaut, un choc lourd enregistré ; en dernier recours, le son généré.
+            float volume = Mathf.Lerp(0.35f, 1f, energy), pitch = Random.Range(0.9f, 1.12f);
+            if (Fragile.Audio.SfxBank.Play(Fragile.Audio.SfxBank.MarbreCoup, point, volume, pitch)) return;
+            if (Fragile.Audio.SfxBank.Play(Fragile.Audio.SfxBank.ImpactLourd, point, volume * 0.8f, pitch * 1.1f)) return;
             var go = new GameObject("Son marbre");
             go.transform.position = point;
             var src = go.AddComponent<AudioSource>();
