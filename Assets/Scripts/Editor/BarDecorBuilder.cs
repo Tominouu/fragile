@@ -301,6 +301,22 @@ namespace Fragile.EditorTools
             Emit("Machine_Glacons", "M_LED_Verte", new Color(0.2f, 1f, 0.3f), 3f, false);
             Emit("Refrigerateur_Vitrine", "M_Eclairage", new Color(0.88f, 0.94f, 1f), 2.2f, true);
             Emit("Distributeur_Boissons", "M_Eclairage", new Color(0.88f, 0.94f, 1f), 2.2f, true);
+            FlatGlass("Distributeur_Boissons", "M_Verre");
+        }
+
+        /// <summary>
+        /// Grande vitre plate : URP Lit transparent (comme la vitre des frigos) au lieu de Fragile/Verre.
+        /// La réfraction en espace écran de Fragile/Verre décale l'image de la scène selon l'orientation de la tête,
+        /// différemment pour chaque œil : sur une vitre plate, le contenu (canettes) apparaît dédoublé en VR.
+        /// </summary>
+        static void FlatGlass(string model, string mat)
+        {
+            var m = AssetDatabase.LoadAssetAtPath<Material>($"{Folder}/{model}/Materials/{mat}.mat");
+            if (m == null) { Debug.LogWarning($"[Fragile] Matériau absent : {model}/{mat}"); return; }
+            m.shader = Shader.Find("Universal Render Pipeline/Lit");
+            m.shaderKeywords = new string[0];
+            m.SetTexture("_BaseMap", null);
+            MakeTransparent(m, new Color(0.82f, 0.9f, 0.95f, 0.1f), 0.95f);
         }
 
         static void Emit(string model, string mat, Color c, float intensity, bool baked)
