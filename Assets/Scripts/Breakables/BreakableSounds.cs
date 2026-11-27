@@ -32,10 +32,26 @@ namespace Fragile.Breakables
             string n = Simplify(objectName);
             var s = new BreakableSounds();
 
+            if (Has(n, "verre_"))
+            {
+                // Verres à boire (GlassesBuilder) : petit fracas de verre ; le shooter, épais, sonne comme un shot cassé.
+                s.brk = Has(n, "shot") ? new[] { new Layer(SfxBank.ShotCasse, 1f) }
+                                       : new[] { new Layer(SfxBank.VerreVinCasse, 0.85f), new Layer(SfxBank.ShotCasse, 0.5f) };
+                s.glass = true;
+                return s;
+            }
             if (!Has(n, "etagere") && Has(n, "bouteille", "flasque"))
             {
                 s.brk = GlassBreak;
                 s.roll = SfxBank.BouteilleRoulement;
+                s.glass = true;
+                return s;
+            }
+            if (Has(n, "miroir"))
+            {
+                // Miroir : il se fend au premier coup, puis éclate (fracas de verre + crissement du tain).
+                s.hit = new[] { SfxBank.MiroirFissure };
+                s.brk = new[] { new Layer(SfxBank.VerreVinCasse, 1f), new Layer(SfxBank.MiroirFissure, 0.7f), new Layer(SfxBank.ShotCasse, 0.5f) };
                 s.glass = true;
                 return s;
             }

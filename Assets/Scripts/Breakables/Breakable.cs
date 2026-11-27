@@ -117,6 +117,8 @@ namespace Fragile.Breakables
             if (m_Broken || Time.time - m_SpawnTime < 0.5f) return;
             // Les éclats d'un objet cassé ne cassent pas les autres (pas de réaction en chaîne).
             if (Debris.IsDebris(c)) return;
+            // Une fléchette n'abîme pas le décor (la cible !), elle ne casse que ce qui est fragile.
+            if (m_Hits > 1f && Fragile.Darts.Dart.IsDart(c)) return;
 
             var breaker = c.rigidbody != null ? c.rigidbody.GetComponentInParent<Breaker>() : c.collider.GetComponentInParent<Breaker>();
             float speed = c.relativeVelocity.magnitude;
@@ -396,6 +398,7 @@ namespace Fragile.Breakables
                 if (rb == null || !rb.isKinematic || released.Contains(rb) || rb.transform.IsChildOf(transform)) continue;
                 if (rb.GetComponent<Breakable>() == null) continue;            // seulement le décor cassable (pas portes, armes…)
                 if (c.bounds.min.y < b.max.y - below) continue;                 // à côté, pas dessus
+                if (c.bounds.min.y > b.max.y + 0.05f) continue;                 // accroché au mur juste au-dessus (miroir)
                 released.Add(rb);
                 rb.isKinematic = false;
                 rb.interpolation = RigidbodyInterpolation.Interpolate;

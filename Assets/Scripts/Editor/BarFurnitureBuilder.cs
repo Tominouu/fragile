@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Fragile.Breakables;
 using TMPro;
 using UnityEditor;
@@ -96,17 +97,19 @@ namespace Fragile.EditorTools
             l.Add(new Item("standing_chalkboard_01", "Ardoise", Kind.Floor, -4.45f, -2.8f, 70f, S(1f)));
             l.Add(new Item("korean_fire_extinguisher_01", "Extincteur", Kind.Floor, -4.8f, -0.75f, 90f, S(1f)));
 
-            // Mur sud, derrière le bar : deux étagères pleines de bouteilles, trophée au-dessus, caisses près des frigos,
-            // tonneau mange-debout et ses tabourets, panneau « sol glissant ».
+            // Mur sud, derrière le bar : deux étagères pleines de bouteilles (miroir de bar au-dessus : BuildBarMirror),
+            // caisses près des frigos, tonneau mange-debout et ses tabourets.
             l.Add(new Item("wooden_display_shelves_01", "Étagère à bouteilles", Kind.Floor, -2.4f, -4.74f, -90f, S(1.25f)));
             l.Add(new Item("wooden_display_shelves_01", "Étagère à bouteilles", Kind.Floor, -0.95f, -4.74f, -90f, S(1.25f)));
-            l.Add(new Item("bull_head", "Trophée", Kind.Wall, -1.68f, WallS, 0f, S(1.6f), 2.33f));
+            // Trophée au mur ouest, au-dessus des tonneaux (coin cave) : il n'est plus posé à cheval sur les étagères.
+            l.Add(new Item("bull_head", "Trophée", Kind.Wall, WallW, -4.2f, 90f, S(1.6f), 2.2f));
             l.Add(new Item("wooden_crate_01", "Caisse", Kind.Floor, 2.3f, -4.75f, 0f, S(1f)));
             l.Add(new Item("wooden_crate_01", "Caisse", Kind.OnTop, 2.32f, -4.75f, 6f, S(1f)));
             l.Add(new Item("wine_barrel_01", "Tonneau mange-debout", Kind.Floor, 3.55f, -3.45f, 50f, S(1f)));
             l.Add(new Item("metal_stool_02", "Tabouret", Kind.Floor, 2.85f, -3.15f, 20f, Stool));
             l.Add(new Item("metal_stool_02", "Tabouret", Kind.Floor, 3.8f, -2.7f, 75f, Stool));
-            l.Add(new Item("WetFloorSign_01", "Panneau sol glissant", Kind.Floor, -0.3f, -3.5f, 25f, S(1f)));
+            // Panneau « sol glissant » près de la porte de sortie (mur ouest, z = −1,66).
+            l.Add(new Item("WetFloorSign_01", "Panneau sol glissant", Kind.Floor, -4.05f, -1.0f, 60f, S(1f)));
             return l;
         }
 
@@ -126,24 +129,9 @@ namespace Fragile.EditorTools
             var prepared = new HashSet<string>();
             int placed = 0;
             foreach (var it in Layout())
-            {
-                if (prepared.Add(it.model)) Prepare(it.model);
-                var model = AssetDatabase.LoadAssetAtPath<GameObject>($"{Folder}/{it.model}/{it.model}.fbx");
-                if (model == null) { Debug.LogWarning($"[Fragile] Modèle absent : {it.model} (Tools/Blender/import_polyhaven.py)."); continue; }
-                var go = (GameObject)PrefabUtility.InstantiatePrefab(model, root);
-                go.name = it.name;
-                if (it.artwork != null) SetArtwork(go, it.artwork);
-                go.transform.localScale = it.scale;
-                go.transform.rotation = Quaternion.Euler(0f, it.rotY, 0f);
-                Place(go, it);
-                Finish(go, it.kind, it.model);
-                var spots = it.model == "wooden_display_shelves_01" ? ShelfSpots(go) : null;
-                MakeBreakable(go, it);
-                if (spots != null) FillShelf(root, go, spots);
-                Physics.SyncTransforms();   // les objets suivants (plantes de table) se posent sur celui-ci
-                placed++;
-            }
+                if (PlaceItem(root, it, prepared)) placed++;
             BuildNeon(root);
+            BuildBarMirror(root);
             BarRoomFinish.ResetCache();
             BarRoomFinish.Build(root);
 
@@ -152,6 +140,91 @@ namespace Fragile.EditorTools
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             Debug.Log($"[Fragile] Bar meublé : {placed} objets + enseigne néon (relance « Éclairer le Bar »).");
+        }
+
+        static bool PlaceItem(Transform root, Item it, HashSet<string> prepared)
+        {
+            if (prepared.Add(it.model)) Prepare(it.model);
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>($"{Folder}/{it.model}/{it.model}.fbx");
+            if (model == null) { Debug.LogWarning($"[Fragile] Modèle absent : {it.model} (Tools/Blender/import_polyhaven.py)."); return false; }
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(model, root);
+            go.name = it.name;
+            if (it.artwork != null) SetArtwork(go, it.artwork);
+            go.transform.localScale = it.scale;
+            go.transform.rotation = Quaternion.Euler(0f, it.rotY, 0f);
+            Place(go, it);
+            Finish(go, it.kind, it.model);
+            var spots = it.model == "wooden_display_shelves_01" ? ShelfSpots(go) : null;
+            MakeBreakable(go, it);
+            if (spots != null) FillShelf(root, go, spots);
+            Physics.SyncTransforms();   // les objets suivants (plantes de table) se posent sur celui-ci
+            Undo.RegisterCreatedObjectUndo(go, "Meubler le Bar");
+            return true;
+        }
+
+        /// <summary>
+        /// Repose seulement les objets de la disposition qui portent ces noms (les anciens sont retirés), sans toucher au
+        /// reste du mobilier ni à l'éclairage. Ex. après avoir déplacé une ligne de <see cref="Layout"/>.
+        /// </summary>
+        public static void RebuildItems(params string[] names)
+        {
+            if (EditorApplication.isPlaying) { Debug.LogWarning("[Fragile] Quitte le mode Play d'abord."); return; }
+            var root = GameObject.Find("Room")?.transform.Find(RootName);
+            if (root == null) { Debug.LogError("[Fragile] Mobilier introuvable : lance « Meubler le Bar »."); return; }
+            var set = new HashSet<string>(names);
+            foreach (var t in new List<Transform>(root.Cast<Transform>()))
+                if (set.Contains(t.name)) Undo.DestroyObjectImmediate(t.gameObject);
+            DecorBreakables.ResetCache();
+            var prepared = new HashSet<string>();
+            int placed = 0;
+            foreach (var it in Layout())
+                if (set.Contains(it.name) && PlaceItem(root, it, prepared)) placed++;
+            if (set.Contains(MirrorName)) { BuildBarMirror(root); placed++; }
+            var scene = EditorSceneManager.GetActiveScene();
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log($"[Fragile] {placed} objet(s) reposé(s) : {string.Join(", ", names)}.");
+        }
+
+        const string MirrorName = "Miroir";
+
+        /// <summary>
+        /// Miroir de bar au-dessus des deux étagères à bouteilles (mur sud) : glace large dans un cadre en laiton, comme les
+        /// suspensions. Cassable en verre : il se fend au premier coup, éclate au second. Son bas reste à plus de 12 cm
+        /// au-dessus des étagères : il ne tombe pas quand on les casse (Breakable.ReleaseResting).
+        /// </summary>
+        static void BuildBarMirror(Transform root)
+        {
+            const float x = -1.675f, y = 2.36f, w = 2.7f, h = 0.54f, frame = 0.045f, depth = 0.03f;
+            var brass = AssetDatabase.LoadAssetAtPath<Material>("Assets/Bar/Lighting/Laiton.mat");
+            const string glassPath = "Assets/Bar/Materials/Miroir_Glace.mat";
+            var glass = AssetDatabase.LoadAssetAtPath<Material>(glassPath);
+            if (glass == null) { glass = new Material(Shader.Find("Universal Render Pipeline/Lit")); AssetDatabase.CreateAsset(glass, glassPath); }
+            // Glace : métal lisse et clair, reflète la sonde de réflexion du bar (pas de vrai reflet temps réel : trop cher sur Quest).
+            glass.SetColor("_BaseColor", new Color(0.78f, 0.8f, 0.8f));
+            glass.SetFloat("_Metallic", 1f); glass.SetFloat("_Smoothness", 0.96f);
+            EditorUtility.SetDirty(glass);
+
+            var go = new GameObject(MirrorName);
+            go.transform.SetParent(root, false);
+            go.transform.position = new Vector3(x, y, WallS + 0.016f + depth * 0.5f);   // + parement de briques
+            var cube = Resources.GetBuiltinResource<Mesh>("Cube.fbx");
+            void Part(string name, Vector3 pos, Vector3 size, Material mat)
+            {
+                var p = new GameObject(name);
+                p.transform.SetParent(go.transform, false);
+                p.transform.localPosition = pos; p.transform.localScale = size;
+                p.AddComponent<MeshFilter>().sharedMesh = cube;
+                p.AddComponent<MeshRenderer>().sharedMaterial = mat;
+            }
+            Part("Glace", new Vector3(0f, 0f, -0.004f), new Vector3(w - frame, h - frame, 0.008f), glass);
+            Part("Cadre haut", new Vector3(0f, h * 0.5f, 0f), new Vector3(w + frame, frame, depth), brass);
+            Part("Cadre bas", new Vector3(0f, -h * 0.5f, 0f), new Vector3(w + frame, frame, depth), brass);
+            Part("Cadre gauche", new Vector3(-w * 0.5f, 0f, 0f), new Vector3(frame, h, depth), brass);
+            Part("Cadre droit", new Vector3(w * 0.5f, 0f, 0f), new Vector3(frame, h, depth), brass);
+            Finish(go, Kind.Wall, null);
+            DecorBreakables.Make(go, "Miroir_Bar", Breakable.Matter.Glass, 2f);
+            Undo.RegisterCreatedObjectUndo(go, "Miroir de bar");
         }
 
         const string Bottles = "Assets/Bar/Models/Bouteilles";
