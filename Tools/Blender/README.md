@@ -20,3 +20,12 @@ Ré-exporter un objet met à jour le modèle et ses matériaux dans Unity sans l
 - Matériaux procéduraux (sans texture) : recréés en couleur unie + métal/brillance.
 - Verre / transparence : non géré, à régler à la main dans Unity.
 - Carte de rugosité : extraite mais pas branchée (URP Lit ne la lit pas seule) ; brillance fixe réglable dans l'Inspector.
+
+## Clients du bar (Trailer) — `generate_clients.py`
+Humains réalistes générés avec **MPFB** (MakeHuman pour Blender, extension gratuite de extensions.blender.org).
+1. Installer MPFB : Préférences > Get Extensions > « MPFB » (ou `blender -c extension install-file -r user_default --enable add-on-mpfb-vX.zip`).
+2. Installer les packs d'assets **CC0** (liste dans `Assets/Trailer/Clients/CREDITS.txt`) : panneau MPFB > Apply assets >
+   Library settings > Load pack from zip (zips sur https://static.makehumancommunity.org/assets/assetpacks/index.html).
+3. `blender -b --python Tools/Blender/generate_clients.py -- Assets/Trailer/Clients` (ou suivi des noms à refaire).
+4. Unity : Fragile > Trailer > Préparer les clients du bar.
+Chaque client : proxy de corps allégé, rig « mixamo_unity » (Humanoid), plafonds de triangles par pièce, textures 1024.

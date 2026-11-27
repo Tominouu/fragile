@@ -1,0 +1,11 @@
+Clients du bar (Trailer) — générés par Tools/Blender/generate_clients.py avec MPFB 2.0.18 (MakeHuman pour Blender).
+
+Licence : tous les assets utilisés sont CC0 (domaine public), aucune attribution requise.
+Packs MakeHuman (https://static.makehumancommunity.org/assets/assetpacks/index.html), versions CC0 :
+  makehuman_system_assets, skins01, skins02, shirts01, pants01, shoes01, hair01, eyebrows01, eyelashes01,
+  dress01, suits01, skirts01, glasses01, hats01.
+Licence MakeHuman des assets : https://static.makehumancommunity.org/about/license.html
+(Le code de MPFB est GPL, mais il ne fait pas partie du jeu : seuls les modèles exportés sont dans le dépôt.)
+
+Animations (Assets/Trailer/Animations) : Quaternius « Universal Animation Library » (Standard), CC0
+  https://quaternius.com/packs/universalanimationlibrary.html

@@ -8,6 +8,9 @@ Jeu VR Unity : un **bar** où l'on casse des objets (bouteilles, puffs) à la **
 - Cible : **Meta Quest** → tout doit rester léger (peu de particules, pas d'ombres sur les débris, shaders simples).
 - Scène principale : **`Assets/Scenes/Bar.unity`**. `Menu.unity` = scène de l'utilisateur ; `SampleScene` / `BasicScene` = template, non utilisées.
 - Deux développeurs : Tom (Windows) et un collègue (Mac).
+- **Trailer** (intro, branche `trailer`) : `Scenes/Trailer.unity` charge la vraie scène Bar au lancement, sans copie.
+  Il retrouve par leur nom `Télés`, `Écran`, `Tabouret`, le XR Origin, et pour les clients du bar `Fauteuil`, `Canapé`,
+  `Banc`, `Tonneau mange-debout`, `Comptoir`, `Porte de sortie` : **ne pas les renommer**. Voir `Assets/Trailer/LISEZMOI.md`.
 
 ## Règles de travail (IMPORTANT)
 - **Commits et PR : aucune mention de Claude** (pas de `Co-Authored-By`, pas de « Generated with »). Auteur = l'utilisateur seul.
